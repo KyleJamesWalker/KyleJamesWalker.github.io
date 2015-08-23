@@ -23,7 +23,7 @@ author: KyleJamesWalker
 
 # This URL is the main adresse. Don't include a slash at the end.
 #
-url: "https://kylejameswalker.github.io"
+url: "http://www.kylejameswalker.com"
 baseurl: ""
 
 # This is for the editing function in _/includes/improve_content.html
@@ -36,7 +36,7 @@ improve_content: ""
 # Example: <img src="{{ site.urlimg }}/{{ post.image.title }}">
 # Markdown-Example for posts ![Image Text]({{ site.urlimg }}/image.jpg)
 #
-urlimg: "https://kylejameswalker.github.io/images/"
+urlimg: "http://www.kylejameswalker.com/images/"
 
 
 # Logo size is 600x80 pixels
