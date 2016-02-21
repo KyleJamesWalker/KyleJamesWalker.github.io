@@ -31,7 +31,7 @@ baseurl: ""
 improve_content: ""
 
 # This URL points directly to the images directory making
-# things easier to link to images in posts and templates. It needs a slash.
+# things easier to link to images in posts and templates. It needs a slash at the end.
 #
 # Example: <img src="{{ site.urlimg }}/{{ post.image.title }}">
 # Markdown-Example for posts ![Image Text]({{ site.urlimg }}/image.jpg)
@@ -42,14 +42,18 @@ urlimg: "http://www.kylejameswalker.com/images/"
 # Logo size is 600x80 pixels
 logo: "logo.png"
 
-
-# Paginates all X entries
-paginate: 5
-
-
-# Pagination path › Important for blog page in /blog/ to work
-paginate_path: "blog/page:num"
-
+#       ____              _             __  _
+#      / __ \____ _____ _(_)___  ____ _/ /_(_)___  ____
+#     / /_/ / __ `/ __ `/ / __ \/ __ `/ __/ / __ \/ __ \
+#    / ____/ /_/ / /_/ / / / / / /_/ / /_/ / /_/ / / / /
+#   /_/    \__,_/\__, /_/_/ /_/\__,_/\__/_/\____/_/ /_/
+#               /____/
+#
+gems:
+    - jekyll-gist
+    - jekyll-paginate
+paginate: 5                      # Paginates all X entries
+paginate_path: "blog/page:num"   # Pagination path › Important for blog page in /blog/ to work
 
 # Theme works best with Kramdown (using the table of contents function)
 markdown: kramdown
@@ -59,22 +63,23 @@ excerpt_separator: "<!--more-->"
 include: ['.htaccess']
 # Exclude these files from your production _site
 exclude:
-  - .git
-  - .gitignore
-  - .sass-cache
-  - Dockerfile
-  - Makefile
-  - Gemfile
-  - Gemfile.lock
+    - .git
+    - .gitignore
+    - .sass-cache
+    - Dockerfile
+    - Makefile
+    - Gemfile
+    - Gemfile.lock
     - LICENSE
-  - README.md
+    - README.md
+    - INSTALL.md
 
 
 # The language setting is used in /includes/header.html for html-settings
-language: "en"
+language: 'en'
 
 
-# Used › default.html front-matter and comress.html
+# Used › default.html front-matter and compress.html
 # Options › http://jch.penibelst.de
 compress_html:
   clippings: all
@@ -83,6 +88,8 @@ compress_html:
   profile: false
   ignore:
     envs: [development]
+
+
 #
 #       ____       ____            ____
 #      / __ \___  / __/___ ___  __/ / /_
@@ -95,22 +102,22 @@ compress_html:
 defaults:
   -
     scope:
-      path: "" 				# an empty string here means all files in the project
-      type: "pages"
+      path: '' 				# an empty string here means all files in the project
+      type: 'pages'
     values:
       show_meta: false 	# Hide metadata for all pages
       # sidebar:    		# Possible values › left, right › by default there will be no sidebar
       comments: false
-      author: "KyleJamesWalker"
+      author: 'KyleJamesWalker'
   -
     scope:
-      path: ""
-      type: "posts"
+      path: ''
+      type: 'posts'
     values:
       show_meta: true   # Show metadata for all posts
       # sidebar:        # Possible values › left, right › by default there will be no sidebar
       comments: true
-      author: "KyleJamesWalker"
+      author: 'KyleJamesWalker'
 
 
 
@@ -146,18 +153,18 @@ defaults:
 #   /_/    \__,_/ |___/_/\___/\____/_/ /_/____/   Favicon-Crap: Favicons, Chrome, Android & Apple Touch Buttons
 #                                                 More information » https://mathiasbynens.be/notes/touch-icons
 
-favicon-32x32:                          "favicon-32x32.png"
-touch-icon-192x192:                     "touch-icon-192x192.png"
-apple-touch-icon-180x180-precomposed:   "apple-touch-icon-180x180-precomposed.png"
-apple-touch-icon-152x152-precomposed:   "apple-touch-icon-152x152-precomposed.png"
-apple-touch-icon-144x144-precomposed:   "apple-touch-icon-144x144-precomposed.png"
-apple-touch-icon-120x120-precomposed:   "apple-touch-icon-120x120-precomposed.png"
-apple-touch-icon-114x114-precomposed:   "apple-touch-icon-114x114-precomposed.png"
-apple-touch-icon-76x76-precomposed:     "apple-touch-icon-76x76-precomposed.png"
-apple-touch-icon-72x72-precomposed:     "apple-touch-icon-72x72-precomposed.png"
-apple-touch-icon-precomposed:           "apple-touch-icon-precomposed.png"
-msapplication_tileimage:                "msapplication_tileimage.png"               # Size 144x144
-msapplication_tilecolor:                "#fabb00"
+favicon-32x32:                          'favicon-32x32.png'
+touch-icon-192x192:                     'touch-icon-192x192.png'
+apple-touch-icon-180x180-precomposed:   'apple-touch-icon-180x180-precomposed.png'
+apple-touch-icon-152x152-precomposed:   'apple-touch-icon-152x152-precomposed.png'
+apple-touch-icon-144x144-precomposed:   'apple-touch-icon-144x144-precomposed.png'
+apple-touch-icon-120x120-precomposed:   'apple-touch-icon-120x120-precomposed.png'
+apple-touch-icon-114x114-precomposed:   'apple-touch-icon-114x114-precomposed.png'
+apple-touch-icon-76x76-precomposed:     'apple-touch-icon-76x76-precomposed.png'
+apple-touch-icon-72x72-precomposed:     'apple-touch-icon-72x72-precomposed.png'
+apple-touch-icon-precomposed:           'apple-touch-icon-precomposed.png'
+msapplication_tileimage:                'msapplication_tileimage.png'               # Size 144x144
+msapplication_tilecolor:                '#fabb00'
 
 
 #       ______                __                __
@@ -166,13 +173,9 @@ msapplication_tilecolor:                "#fabb00"
 #    / __/ / /_/ / /__/  __/ /_/ / /_/ / /_/ / ,<
 #   /_/    \__,_/\___/\___/_.___/\____/\____/_/|_|      Facebook-Optimization › http://j.mp/fb_optimize
 
-# og_image:                           "http://images.phlow.de/phlow/phlow_de-logo-512x.png"
-# og_locale:                          "en_EN"
-# og_type:                            "website"
-# og_title:                           "Feeling Responsive – A Responsive Theme for Jekyll"
-# og_description:                     "Feeling Responsive is built on the fabulous Foundation Framework and comes with lots of features to show your content right."
-# og_url:                           ""
-# og_site_name:                     ""
+# og_image:                           'http://images.phlow.de/phlow/phlow_de-logo-512x.png'
+# og_locale:                          'en_EN'
+# og_type:                            'website'
 
 
 #      _____            _       __   __  ___         ___
@@ -194,7 +197,7 @@ msapplication_tilecolor:                "#fabb00"
 #
 # used in _includes/comments
 
-disqus_shortname: feelingresponsive
+disqus_shortname: kylejameswalker
 
 
 #      _____

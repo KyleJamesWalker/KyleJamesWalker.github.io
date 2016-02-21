@@ -1,6 +1,9 @@
 FROM alpine:3.2
 MAINTAINER Kyle James Walker <KyleJamesWalker@gmail.com>
 
+COPY Gemfile /Gemfile
+COPY Gemfile.lock /Gemfile.lock
+
 RUN apk add --update \
       gcc \
       git \
@@ -17,7 +20,8 @@ RUN apk add --update \
     cd / && \
     rm -rf /tmp/rubygems-2.4.8 /tmp/gems.zip && \
     gem install rubygems-update && \
-    gem install jekyll && \
+    gem install bundler && \
+    bundle install && \
     apk del git gcc musl-dev make && \
     rm -rf /var/cache/apk/*
 

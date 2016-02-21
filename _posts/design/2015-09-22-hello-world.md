@@ -1,5 +1,5 @@
 ---
-layout: page-fullwidth
+layout: page
 title: "The Elusive Hello World"
 subheadline: "Your first program, your first post."
 teaser: |

@@ -5,5 +5,8 @@
 #
 # Ressource › http://blog.sorryapp.com/blogging-with-jekyll/2014/02/06/adding-authors-to-your-jekyll-site.html
 KyleJamesWalker:
-    name: "Kyle James Walker"
-    url: http://KyleJamesWalker.github.io/
+  name: "Kyle James Walker"
+  siterole: "webmaster, developer, copywriter, designer"
+  uri: http://KyleJamesWalker.github.io/
+  email: KyleJamesWalker@gmail.com
+  twitter: "@WalkerKyleJames"

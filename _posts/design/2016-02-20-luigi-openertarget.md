@@ -1,5 +1,5 @@
 ---
-layout: page-fullwidth
+layout: page
 title: "Luigi OpenerTarget"
 subheadline: "A new and flexible target"
 teaser: |
@@ -11,8 +11,6 @@ categories:
 tags:
   - programming
 ---
-
-*Note*: This is currently a proposed PR against luigi
 
 Target types are often used directly in the output function, as shown below:
 
