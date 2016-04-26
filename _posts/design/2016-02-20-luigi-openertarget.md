@@ -14,7 +14,7 @@ tags:
 
 Target types are often used directly in the output function, as shown below:
 
-{% highlight python linenos %}
+{% highlight python %}
 import luigi
 
 class StaticTask(luigi.Task):
@@ -39,7 +39,7 @@ allow shows the pattern used it most luigi tasks, but allows the task to be run
 against the local file system, mock file system, s3 file system, and many
 others including registration of custom target types.
 
-{% highlight python linenos %}
+{% highlight python %}
 import luigi
 
 from luigi.contrib.opener import OpenerTarget
