@@ -12,7 +12,7 @@ tags:
   - programming
 ---
 
-{% highlight python linenos %}
+{% highlight python %}
 def example():
     print("Hello World")
 {% endhighlight %}
