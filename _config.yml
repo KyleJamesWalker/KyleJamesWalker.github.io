@@ -23,7 +23,7 @@ author: KyleJamesWalker
 
 # This URL is the main adresse. Don't include a slash at the end.
 #
-url: "http://www.kylejameswalker.com"
+url: "https://www.kylejameswalker.com"
 baseurl: ""
 
 # This is for the editing function in _/includes/improve_content.html
@@ -36,7 +36,7 @@ improve_content: ""
 # Example: <img src="{{ site.urlimg }}/{{ post.image.title }}">
 # Markdown-Example for posts ![Image Text]({{ site.urlimg }}/image.jpg)
 #
-urlimg: "http://www.kylejameswalker.com/images/"
+urlimg: "https://www.kylejameswalker.com/images/"
 
 
 # Logo size is 600x80 pixels
@@ -49,7 +49,7 @@ logo: "logo.png"
 #   /_/    \__,_/\__, /_/_/ /_/\__,_/\__/_/\____/_/ /_/
 #               /____/
 #
-gems:
+plugins:
     - jekyll-gist
     - jekyll-paginate
 paginate: 5                      # Paginates all X entries
@@ -58,9 +58,8 @@ paginate_path: "blog/page:num"   # Pagination path › Important for blog page i
 # Theme works best with Kramdown (using the table of contents function)
 markdown: kramdown
 permalink: /:categories/:title/
-highlight: pygments
+highlighter: rouge
 excerpt_separator: "<!--more-->"
-include: ['.htaccess']
 # Exclude these files from your production _site
 exclude:
     - .git
@@ -219,9 +218,13 @@ sass:
 #   /_/  |_/_/ /_/\__,_/_/\__, /\__/_/\___/____/      https://www.google.com/analytics/
 #                        /____/
 #
+# Universal Analytics (UA-*) was deprecated July 2023. Use Google Analytics 4 (GA4).
+# Add your G-XXXXXXXXXX measurement ID below for GA4 tracking.
 # used in _includes/footer_scripts
 
-google_analytics_tracking_id: UA-60112281-1
+google_analytics_measurement_id: ""   # e.g. G-XXXXXXXXXX
+# Legacy UA (deprecated - no longer processes data):
+# google_analytics_tracking_id: UA-60112281-1
 
 
 
