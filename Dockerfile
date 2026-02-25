@@ -1,18 +1,23 @@
 FROM ruby:3.3-alpine
 
-# Install build dependencies for native extensions
+# Install build dependencies for native extensions + Node.js for app builds
 RUN apk add --no-cache \
     build-base \
     git \
-    libffi-dev
+    libffi-dev \
+    nodejs \
+    npm
 
 WORKDIR /code
 
 COPY Gemfile .
 COPY Gemfile.lock* .
 
-# Install dependencies (Gemfile.lock optional on first build)
+# Install Ruby dependencies
 RUN bundle install
 
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
 EXPOSE 4000
-CMD ["bundle", "exec", "jekyll", "serve", "--host", "0.0.0.0", "--config", "_config.yml,_config_dev.yml", "--force_polling"]
+ENTRYPOINT ["/entrypoint.sh"]

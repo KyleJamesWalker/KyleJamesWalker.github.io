@@ -66,6 +66,7 @@ exclude:
     - .git
     - .gitignore
     - .sass-cache
+    - node_modules
     - Dockerfile
     - Makefile
     - Gemfile

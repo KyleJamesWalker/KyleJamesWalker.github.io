@@ -1,3 +1,7 @@
+{% if page.app_script %}
+<script type="module" src="{{ site.url }}{{ site.baseurl }}{{ page.app_script }}"></script>
+{% endif %}
+
 {% if page.mediaplayer == true %}
 <script>
 $('audio,video').mediaelementplayer();

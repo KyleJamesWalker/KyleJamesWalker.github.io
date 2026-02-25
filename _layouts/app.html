@@ -1,0 +1,18 @@
+---
+layout: compress
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>{{ page.title }} - {{ site.title }}</title>
+	<link rel="stylesheet" href="{{ site.baseurl }}/assets/dist/cardboard-slicer.css">
+	<style>html,body{margin:0;padding:0;height:100%;}</style>
+	{% include _favicon.html %}
+</head>
+<body class="app-body">
+	{{ content }}
+	<script type="module" src="{{ site.baseurl }}/assets/dist/cardboard-slicer.js"></script>
+</body>
+</html>
