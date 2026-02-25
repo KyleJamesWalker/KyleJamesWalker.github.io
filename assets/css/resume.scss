@@ -4,8 +4,6 @@ sitemap:
   exclude: true
 ---
 
-@charset "utf-8";
-
 @import "functions.scss";
 @import "01_settings_colors.scss";
-@import "resume.scss";
+@import "resume_tables";

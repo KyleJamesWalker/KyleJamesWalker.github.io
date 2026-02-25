@@ -20,7 +20,8 @@ sass:
   # trace_selectors: true
   # debug_info: true
   # FUTURE https://github.com/jekyll/jekyll-sass-converter/issues/12
-  sourcemap: true
+  # Jekyll 4.x / jekyll-sass-converter 3.x expects symbol: :always, :auto, or :never (not boolean)
+  sourcemap: :always
 
 # Disable when not in production
 google_analytics_tracking_id:
