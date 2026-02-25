@@ -1,31 +1,23 @@
-FROM alpine:3.2
-MAINTAINER Kyle James Walker <KyleJamesWalker@gmail.com>
+FROM ruby:3.3-alpine
 
-COPY Gemfile /Gemfile
-COPY Gemfile.lock /Gemfile.lock
-
-RUN apk add --update \
-      gcc \
-      git \
-      libffi-dev \
-      nodejs \
-      make \
-      python \
-      musl-dev \
-      ruby-dev && \
-    wget http://production.cf.rubygems.org/rubygems/rubygems-2.4.8.zip -q -O /tmp/gems.zip && \
-    unzip /tmp/gems.zip -q -d /tmp && \
-    cd /tmp/rubygems-2.4.8 && \
-    ruby setup.rb && \
-    cd / && \
-    rm -rf /tmp/rubygems-2.4.8 /tmp/gems.zip && \
-    gem install rubygems-update && \
-    gem install bundler && \
-    bundle install && \
-    apk del git gcc musl-dev make && \
-    rm -rf /var/cache/apk/*
+# Install build dependencies for native extensions + Node.js for app builds
+RUN apk add --no-cache \
+    build-base \
+    git \
+    libffi-dev \
+    nodejs \
+    npm
 
 WORKDIR /code
 
+COPY Gemfile .
+COPY Gemfile.lock* .
+
+# Install Ruby dependencies
+RUN bundle install
+
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
 EXPOSE 4000
-CMD ["jekyll", "serve", "--host", "0.0.0.0", "--config", "_config.yml,_config_dev.yml", "--force_polling"]
+ENTRYPOINT ["/entrypoint.sh"]

@@ -1,3 +1,7 @@
+{% if page.app_script %}
+<script type="module" src="{{ site.url }}{{ site.baseurl }}{{ page.app_script }}"></script>
+{% endif %}
+
 {% if page.mediaplayer == true %}
 <script>
 $('audio,video').mediaelementplayer();
@@ -17,17 +21,14 @@ $('audio,video').mediaelementplayer();
 
 
 
-{% if site.google_analytics_tracking_id %}
+{% if site.google_analytics_measurement_id and site.google_analytics_measurement_id != "" %}
+<!-- Google Analytics 4 -->
+<script async src="https://www.googletagmanager.com/gtag/js?id={{ site.google_analytics_measurement_id }}"></script>
 <script>
-  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
-
-  ga('create', '{{ site.google_analytics_tracking_id }}', 'auto');
-  ga('set', 'anonymizeIp', true);
-  ga('send', 'pageview');
-
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', '{{ site.google_analytics_measurement_id }}', { 'anonymize_ip': true });
 </script>
 {% endif %}
 

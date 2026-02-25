@@ -1,5 +1,16 @@
 source 'https://rubygems.org'
 
-gem 'jekyll', '3.0.4'
-gem 'jekyll-gist', '1.4.0'
-gem 'jekyll-paginate', '1.1.0'
+# Jekyll 3.10.x matches GitHub Pages build environment.
+# See https://pages.github.com/versions/
+gem 'jekyll', '~> 3.10'
+gem 'jekyll-gist'
+gem 'jekyll-paginate'
+gem 'jekyll-sitemap'
+gem 'kramdown-parser-gfm'
+
+# Silence Ruby 3.4 deprecation warnings (base64, bigdecimal)
+gem 'base64'
+gem 'bigdecimal'
+
+# Faraday retry middleware (used by jekyll-gist/octokit)
+gem 'faraday-retry'

@@ -13,6 +13,13 @@
   url: "/info"
   side: left
 
+- title: Applications
+  url: "/applications/"
+  side: left
+  dropdown:
+  - title: "Cardboard Slicer"
+    url: "/applications/cardboard-slicer/"
+
 - title: "Search"
   url: "/search/"
   side: right
