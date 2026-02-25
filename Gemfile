@@ -5,6 +5,7 @@ source 'https://rubygems.org'
 gem 'jekyll', '~> 3.10'
 gem 'jekyll-gist'
 gem 'jekyll-paginate'
+gem 'jekyll-sitemap'
 gem 'kramdown-parser-gfm'
 
 # Silence Ruby 3.4 deprecation warnings (base64, bigdecimal)
