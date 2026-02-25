@@ -43,7 +43,7 @@ $block-grid-media-queries: true !default;
     @if $align-block-grid-to-grid {
       margin: 0;
     } @else {
-      margin: 0 (-$spacing/2);
+      margin: 0 (-(safe-div($spacing, 2)));
     }
     @include clearfix;
 
@@ -52,16 +52,16 @@ $block-grid-media-queries: true !default;
       height: auto;
       float: $default-float;
       @if $include-spacing {
-        padding: 0 ($spacing/2) $spacing;
+        padding: 0 safe-div($spacing, 2) $spacing;
       }
     }
   }
 
   @if $per-row {
     &>li {
-      width: 100%/$per-row;
+      width: safe-pct(safe-div(1, $per-row));
       @if $include-spacing {
-        padding: 0 ($spacing/2) $spacing;
+        padding: 0 safe-div($spacing, 2) $spacing;
       }
       list-style: none;
 
@@ -82,8 +82,8 @@ $block-grid-media-queries: true !default;
         $grid-column: '';
       }
       &:nth-of-type(#{$per-row}n#{unquote($grid-column)}) {
-        padding-left: ($spacing - (($spacing / $per-row) * ($per-row - ($i - 1))));
-        padding-right: ($spacing - (($spacing / $per-row) * $i));
+        padding-left: ($spacing - ((safe-div($spacing, $per-row)) * ($per-row - ($i - 1))));
+        padding-right: ($spacing - ((safe-div($spacing, $per-row)) * $i));
       }
     }
   }
