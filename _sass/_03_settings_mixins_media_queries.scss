@@ -1,4 +1,7 @@
 @charset "utf-8";
+@use "functions" as *;
+@use "01_settings_colors" as *;
+@use "02_settings_typography" as *;
 @use "sass:string";
 // Foundation by ZURB
 // foundation.zurb.com
@@ -124,8 +127,10 @@ $base-font-size: 100% !default;
 // $gap - spacing between the lines in hamburger icon, set value in px
 // $color - icon color
 // $hover-color - icon color during hover
-// $offcanvas - Set to true of @include in offcanvas
-@mixin hamburger($width, $left, $top, $thickness, $gap, $color, $hover-color, $offcanvas) {
+// $offcanvas - Set to true when @include in offcanvas
+// $link-padding - Used when $offcanvas is false for non-offcanvas top-bar positioning
+// $menu-icon-width - Used when $offcanvas is true for offcanvas left positioning
+@mixin hamburger($width, $left, $top, $thickness, $gap, $color, $hover-color, $offcanvas, $link-padding: 0, $menu-icon-width: 16px) {
   span::after {
     content: "";
     position: absolute;
@@ -144,13 +149,13 @@ $base-font-size: 100% !default;
         left: $left;
       }
       @else {
-        left: safe-div($tabbar-menu-icon-width - $width, 2);
+        left: safe-div($menu-icon-width - $width, 2);
       }
     }
     @else {
       top: 50%;
       margin-top: -(safe-div($width, 2));
-      #{$opposite-direction}: $topbar-link-padding;
+      #{$opposite-direction}: $link-padding;
     }
 
     box-shadow:

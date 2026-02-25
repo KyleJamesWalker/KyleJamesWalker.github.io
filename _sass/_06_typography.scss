@@ -1,5 +1,8 @@
 @charset "utf-8";
 @use "sass:color";
+@use "01_settings_colors" as *;
+@use "02_settings_typography" as *;
+@use "04_settings_global" as *;
 /* TOC – Typography
 
 Check typography variables › _3_typography_settings.scss

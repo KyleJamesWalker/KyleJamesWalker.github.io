@@ -9,7 +9,7 @@ Modular Scale › http://www.modularscale.com//?16,36&px&1.25&web&table
 
 */
 
-@import "functions"; // Allows the use of rem-calc() or lower-bound() in your settings
+@use "functions" as *; // Allows the use of rem-calc() or lower-bound() in your settings
 
 
 

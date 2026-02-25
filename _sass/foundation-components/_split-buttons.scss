@@ -2,9 +2,10 @@
 // foundation.zurb.com
 // Licensed under MIT Open Source
 
-@import "global";
-@import "buttons";
-@import "dropdown-buttons";
+@use "../functions" as *;
+@use "global" as *;
+@use "buttons" as *;
+@use "dropdown-buttons" as *;
 
 //
 // @name _split-buttons.scss

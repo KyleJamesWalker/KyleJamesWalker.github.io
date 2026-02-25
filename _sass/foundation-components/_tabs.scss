@@ -3,8 +3,9 @@
 // Licensed under MIT Open Source
 
 @use "sass:color";
-@import "global";
-@import "grid";
+@use "../functions" as *;
+@use "global" as *;
+@use "grid" as *;
 
 //
 // @variables

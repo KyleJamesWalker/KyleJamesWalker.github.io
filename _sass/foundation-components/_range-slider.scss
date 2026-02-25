@@ -3,7 +3,8 @@
 // Licensed under MIT Open Source
 
 @use "sass:color";
-@import "global";
+@use "../functions" as *;
+@use "global" as *;
 
 //
 // @name _range-slider.scss

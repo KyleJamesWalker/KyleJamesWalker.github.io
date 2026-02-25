@@ -5,13 +5,12 @@ sitemap:
 @charset "utf-8";
 @use "sass:color";
 
-@import "functions.scss";
+@use "functions" as *;
 
-$include-html-classes: false;
-@import "01_settings_colors.scss";
-@import "02_settings_typography.scss";
-@import "03_settings_mixins_media_queries.scss";
-@import "04_settings_global.scss";
+@use "01_settings_colors" as *;
+@use "02_settings_typography" as *;
+@use "03_settings_mixins_media_queries" as * with ($include-html-classes: false);
+@use "04_settings_global" as *;
 
 * {
 	display: block;

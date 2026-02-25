@@ -3,8 +3,9 @@
 // Licensed under MIT Open Source
 
 @use "sass:color";
-@import "global";
-@import "type";
+@use "../functions" as *;
+@use "global" as *;
+@use "type" as *;
 
 // Off Canvas Tab Bar Variables
 $include-html-off-canvas-classes: $include-html-classes !default;
@@ -321,7 +322,7 @@ $menu-slide: "transform 500ms ease" !default;
       // $color - icon color Default: $tabbar-menu-icon-color
       // $hover-color - icon color when hovered Default: $tabbar-menu-icon-hover
       // $offcanvas - Set to true
-      @include hamburger($tabbar-hamburger-icon-width, $tabbar-hamburger-icon-left, $tabbar-hamburger-icon-top, $tabbar-hamburger-icon-thickness, $tabbar-hamburger-icon-gap, $tabbar-menu-icon-color, $tabbar-menu-icon-hover, true)
+      @include hamburger($tabbar-hamburger-icon-width, $tabbar-hamburger-icon-left, $tabbar-hamburger-icon-top, $tabbar-hamburger-icon-thickness, $tabbar-hamburger-icon-gap, $tabbar-menu-icon-color, $tabbar-menu-icon-hover, true, 0, $tabbar-menu-icon-width)
     }
 
     .left-off-canvas-menu { @include off-canvas-menu($position: left); }

@@ -3,8 +3,9 @@
 // Licensed under MIT Open Source
 
 @use "sass:color";
-@import "global";
-@import "buttons";
+@use "../functions" as *;
+@use "global" as *;
+@use "buttons" as *;
 
 //
 // @variables

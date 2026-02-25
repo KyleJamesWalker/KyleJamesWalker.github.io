@@ -5,41 +5,39 @@ sitemap:
 ---
 @charset "utf-8";
 
-@import "functions.scss";
-@import "01_settings_colors.scss";
-@import "02_settings_typography.scss";
-@import "03_settings_mixins_media_queries.scss";
-@import "04_settings_global.scss";
-@import "05_normalize.scss"; // normalize.css v3.0.2
+@use "functions" as *;
+@use "01_settings_colors" as *;
+@use "02_settings_typography" as *;
+@use "03_settings_mixins_media_queries" as *;
+@use "04_settings_global" as *;
+@use "05_normalize" as *; // normalize.css v3.0.2
 
-@import "foundation-components/top-bar";
-@import "foundation-components/accordion";
-@import "foundation-components/alert-boxes";
-@import "foundation-components/breadcrumbs";
-@import "foundation-components/block-grid";
-@import "foundation-components/button-groups";
-@import "foundation-components/buttons";
-@import "foundation-components/clearing";
-@import "foundation-components/dropdown";
-@import "foundation-components/dropdown-buttons";
-@import "foundation-components/flex-video";
-@import "foundation-components/forms";
-@import "foundation-components/grid";
-@import "foundation-components/inline-lists";
-@import "foundation-components/keystrokes";
-@import "foundation-components/panels";
-@import "foundation-components/reveal";
-@import "foundation-components/side-nav";
-@import "foundation-components/sub-nav";
-@import "foundation-components/tables";
-@import "foundation-components/thumbs";
-@import "foundation-components/top-bar";
-@import "foundation-components/type";
-@import "foundation-components/visibility";
+@use "foundation-components/top-bar" as *;
+@use "foundation-components/accordion" as *;
+@use "foundation-components/alert-boxes" as *;
+@use "foundation-components/breadcrumbs" as *;
+@use "foundation-components/block-grid" as *;
+@use "foundation-components/button-groups" as *;
+@use "foundation-components/buttons" as *;
+@use "foundation-components/clearing" as *;
+@use "foundation-components/dropdown" as *;
+@use "foundation-components/dropdown-buttons" as *;
+@use "foundation-components/flex-video" as *;
+@use "foundation-components/forms" as *;
+@use "foundation-components/grid" as *;
+@use "foundation-components/inline-lists" as *;
+@use "foundation-components/keystrokes" as *;
+@use "foundation-components/panels" as *;
+@use "foundation-components/reveal" as *;
+@use "foundation-components/side-nav" as *;
+@use "foundation-components/sub-nav" as *;
+@use "foundation-components/tables" as *;
+@use "foundation-components/thumbs" as *;
+@use "foundation-components/type" as *;
+@use "foundation-components/visibility" as *;
 
-@import "06_typography.scss";
-@import "07_layout.scss";
-@import "foundation-components/grid";
-@import "09_elements.scss";
+@use "06_typography" as *;
+@use "07_layout" as *;
+@use "09_elements" as *;
 
-@import "11_syntax-highlighting.scss";
+@use "11_syntax-highlighting" as *;

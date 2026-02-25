@@ -4,7 +4,7 @@
 
 @use "sass:list";
 @use "sass:string";
-@import "global";
+@use "global" as *;
 
 //
 // Foundation Visibility Classes

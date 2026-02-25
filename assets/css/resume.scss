@@ -4,6 +4,6 @@ sitemap:
   exclude: true
 ---
 
-@import "functions.scss";
-@import "01_settings_colors.scss";
-@import "resume_tables";
+@use "functions" as *;
+@use "01_settings_colors" as *;
+@use "resume_tables" as *;

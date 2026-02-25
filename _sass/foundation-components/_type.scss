@@ -4,7 +4,8 @@
 
 @use "sass:color";
 @use "sass:list";
-@import "global";
+@use "../functions" as *;
+@use "global" as *;
 
 $include-html-type-classes: $include-html-classes !default;
 

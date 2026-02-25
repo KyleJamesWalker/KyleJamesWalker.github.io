@@ -2,8 +2,9 @@
 // foundation.zurb.com
 // Licensed under MIT Open Source
 
-@import "global";
-@import "grid";
+@use "../functions" as *;
+@use "global" as *;
+@use "grid" as *;
 
 //
 // @name _reveal.scss
