@@ -2,7 +2,7 @@ source 'https://rubygems.org'
 
 # Jekyll 3.10.x matches GitHub Pages build environment.
 # See https://pages.github.com/versions/
-gem 'jekyll', '~> 3.10'
+gem 'jekyll', '~> 4.4'
 gem 'jekyll-gist'
 gem 'jekyll-paginate'
 gem 'jekyll-sitemap'
