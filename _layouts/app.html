@@ -7,12 +7,13 @@ layout: compress
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>{{ page.title }} - {{ site.title }}</title>
-	<link rel="stylesheet" href="{{ site.baseurl }}/assets/dist/cardboard-slicer.css">
+	{% assign app_name = page.permalink | split: '/' | last %}
+	<link rel="stylesheet" href="{{ site.baseurl }}/assets/dist/{{ app_name }}.css">
 	<style>html,body{margin:0;padding:0;height:100%;}</style>
 	{% include _favicon.html %}
 </head>
 <body class="app-body">
 	{{ content }}
-	<script type="module" src="{{ site.baseurl }}/assets/dist/cardboard-slicer.js"></script>
+	<script type="module" src="{{ site.baseurl }}/assets/dist/{{ app_name }}.js"></script>
 </body>
 </html>

@@ -19,6 +19,8 @@
   dropdown:
   - title: "Cardboard Slicer"
     url: "/applications/cardboard-slicer/"
+  - title: "Lead Scanner"
+    url: "/applications/lead-scanner/"
 
 - title: "Search"
   url: "/search/"
