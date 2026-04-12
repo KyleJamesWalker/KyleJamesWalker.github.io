@@ -35,6 +35,7 @@ export default defineConfig({
       input: {
         'cardboard-slicer': 'applications/cardboard-slicer/main.jsx',
         'lead-scanner': 'applications/lead-scanner/main.jsx',
+        'voronoi-shapes': 'applications/voronoi-shapes/main.jsx',
       },
       output: {
         entryFileNames: '[name].js',

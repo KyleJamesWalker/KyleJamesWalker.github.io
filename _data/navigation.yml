@@ -21,6 +21,8 @@
     url: "/applications/cardboard-slicer/"
   - title: "Lead Scanner"
     url: "/applications/lead-scanner/"
+  - title: "Voronoi Shapes"
+    url: "/applications/voronoi-shapes/"
 
 - title: "Search"
   url: "/search/"
