@@ -28,6 +28,8 @@ const DEFAULT_SETTINGS = {
   gradientStart: '#FF6B6B',
   gradientEnd: '#4ECDC4',
   fillTolerance: 30,
+  gapWidth: 4,
+  smoothIterations: 2,
 };
 
 const REGION_COLORS = [
@@ -84,6 +86,84 @@ function floodFill(imageData, startX, startY, tolerance) {
   }
 
   return { mask, bounds: { x: minX, y: minY, w: maxX - minX + 1, h: maxY - minY + 1 } };
+}
+
+function erodeMask(mask, width, height, radius) {
+  if (radius <= 0) return mask;
+  const r = Math.ceil(radius);
+
+  // Horizontal pass: pixel survives only if all pixels in row within ±r are set
+  const hPass = new Uint8Array(width * height);
+  for (let y = 0; y < height; y++) {
+    const row = y * width;
+    for (let x = r; x < width - r; x++) {
+      let ok = true;
+      for (let dx = -r; dx <= r; dx++) {
+        if (!mask[row + x + dx]) { ok = false; break; }
+      }
+      if (ok) hPass[row + x] = 1;
+    }
+  }
+
+  // Vertical pass on horizontal result
+  const result = new Uint8Array(width * height);
+  for (let x = 0; x < width; x++) {
+    for (let y = r; y < height - r; y++) {
+      let ok = true;
+      for (let dy = -r; dy <= r; dy++) {
+        if (!hPass[(y + dy) * width + x]) { ok = false; break; }
+      }
+      if (ok) result[y * width + x] = 1;
+    }
+  }
+  return result;
+}
+
+function computeBounds(mask, width, height) {
+  let minX = width, maxX = 0, minY = height, maxY = 0;
+  let count = 0;
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      if (mask[y * width + x]) {
+        if (x < minX) minX = x;
+        if (x > maxX) maxX = x;
+        if (y < minY) minY = y;
+        if (y > maxY) maxY = y;
+        count++;
+      }
+    }
+  }
+  if (count === 0) return null;
+  return { x: minX, y: minY, w: maxX - minX + 1, h: maxY - minY + 1 };
+}
+
+function sampleBoundaryGuards(erodedMask, width, height, spacing) {
+  // Find pixels just OUTSIDE the eroded mask that are adjacent to it.
+  // These form a dense ring of guard Voronoi sites that push interior
+  // cells inward, creating organic curved edges along boundaries.
+  const guards = [];
+  const cellSize = Math.max(2, Math.round(spacing));
+  const seen = new Set();
+
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      if (erodedMask[y * width + x]) continue; // skip interior pixels
+      // Is this pixel adjacent to the eroded mask?
+      const adj =
+        (x > 0 && erodedMask[y * width + x - 1]) ||
+        (x < width - 1 && erodedMask[y * width + x + 1]) ||
+        (y > 0 && erodedMask[(y - 1) * width + x]) ||
+        (y < height - 1 && erodedMask[(y + 1) * width + x]);
+      if (!adj) continue;
+
+      // Spatial subsampling — one guard per cellSize x cellSize grid cell
+      const key = `${Math.floor(x / cellSize)},${Math.floor(y / cellSize)}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      guards.push([x, y]);
+    }
+  }
+  return guards;
 }
 
 function bestCandidateSampling(mask, bounds, canvasWidth, count) {
@@ -153,6 +233,89 @@ function thickenStrokes(svgContent) {
     .replace(/stroke-width\s*=\s*"[\d.]+[a-z]*"/gi, 'stroke-width="2"');
 }
 
+function lineIntersection(x1, y1, x2, y2, x3, y3, x4, y4) {
+  const d = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
+  if (Math.abs(d) < 1e-10) return null;
+  const t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / d;
+  return [x1 + t * (x2 - x1), y1 + t * (y2 - y1)];
+}
+
+function insetPolygon(polygon, amount) {
+  if (amount <= 0) return polygon;
+  const n = polygon.length - 1; // d3 voronoi closes polygons (last === first)
+  if (n < 3) return null;
+
+  // Centroid for determining inward direction
+  let cx = 0, cy = 0;
+  for (let i = 0; i < n; i++) { cx += polygon[i][0]; cy += polygon[i][1]; }
+  cx /= n; cy /= n;
+
+  // Offset each edge inward
+  const edges = [];
+  for (let i = 0; i < n; i++) {
+    const j = (i + 1) % n;
+    const dx = polygon[j][0] - polygon[i][0];
+    const dy = polygon[j][1] - polygon[i][1];
+    const len = Math.sqrt(dx * dx + dy * dy);
+    if (len < 1e-10) continue;
+
+    // Normal perpendicular to edge
+    let nx = -dy / len, ny = dx / len;
+
+    // Ensure it points inward (toward centroid)
+    const mx = (polygon[i][0] + polygon[j][0]) / 2;
+    const my = (polygon[i][1] + polygon[j][1]) / 2;
+    if (nx * (cx - mx) + ny * (cy - my) < 0) { nx = -nx; ny = -ny; }
+
+    edges.push({
+      x1: polygon[i][0] + nx * amount, y1: polygon[i][1] + ny * amount,
+      x2: polygon[j][0] + nx * amount, y2: polygon[j][1] + ny * amount,
+    });
+  }
+
+  if (edges.length < 3) return null;
+
+  // Intersect adjacent offset edges to form the inset polygon
+  const result = [];
+  for (let i = 0; i < edges.length; i++) {
+    const j = (i + 1) % edges.length;
+    const pt = lineIntersection(
+      edges[i].x1, edges[i].y1, edges[i].x2, edges[i].y2,
+      edges[j].x1, edges[j].y1, edges[j].x2, edges[j].y2,
+    );
+    if (pt) result.push(pt);
+  }
+
+  if (result.length < 3) return null; // collapsed to nothing
+  result.push(result[0]); // close the polygon
+  return result;
+}
+
+function chaikinSmooth(polygon, iterations) {
+  if (iterations <= 0) return polygon;
+  let pts = polygon.slice(0, -1); // remove closing point
+
+  for (let iter = 0; iter < iterations; iter++) {
+    const next = [];
+    const n = pts.length;
+    for (let i = 0; i < n; i++) {
+      const j = (i + 1) % n;
+      next.push([
+        0.75 * pts[i][0] + 0.25 * pts[j][0],
+        0.75 * pts[i][1] + 0.25 * pts[j][1],
+      ]);
+      next.push([
+        0.25 * pts[i][0] + 0.75 * pts[j][0],
+        0.25 * pts[i][1] + 0.75 * pts[j][1],
+      ]);
+    }
+    pts = next;
+  }
+
+  pts.push(pts[0]); // re-close
+  return pts;
+}
+
 function parseSVGDimensions(svgContent) {
   const parser = new DOMParser();
   const doc = parser.parseFromString(svgContent, 'image/svg+xml');
@@ -217,23 +380,46 @@ function maskToSVGPath(mask, width, height, blockSize = 2) {
 }
 
 function generateVoronoiForRegion(region, settings, canvasWidth, canvasHeight) {
-  const points = bestCandidateSampling(region.mask, region.bounds, canvasWidth, settings.pointCount);
-  if (points.length < 2) return [];
+  const erosionRadius = Math.ceil(settings.gapWidth / 2);
+  const erodedMask = erodeMask(region.mask, canvasWidth, canvasHeight, erosionRadius);
+  const erodedBounds = computeBounds(erodedMask, canvasWidth, canvasHeight);
+  if (!erodedBounds) return { cells: [], erodedMask };
 
-  const delaunay = Delaunay.from(points);
+  // Interior points — these become rendered cells
+  const interiorPoints = bestCandidateSampling(erodedMask, erodedBounds, canvasWidth, settings.pointCount);
+  if (interiorPoints.length < 2) return { cells: [], erodedMask };
+
+  // Dense guard points tracing the eroded mask boundary — push interior
+  // cells inward so they curve organically near edges instead of being
+  // hard-clipped. Spacing ~1/4 of average inter-cell distance ensures
+  // smooth curves even along rounded corners.
+  const area = erodedBounds.w * erodedBounds.h;
+  const avgSpacing = Math.sqrt(area / settings.pointCount);
+  const guardSpacing = Math.max(3, Math.floor(avgSpacing / 4));
+  const guardPoints = sampleBoundaryGuards(erodedMask, canvasWidth, canvasHeight, guardSpacing);
+
+  const allPoints = [...interiorPoints, ...guardPoints];
+  const delaunay = Delaunay.from(allPoints);
   const voronoi = delaunay.voronoi([0, 0, canvasWidth, canvasHeight]);
   const cells = [];
+  const insetAmount = settings.gapWidth / 2; // half gap per side
 
-  for (let i = 0; i < points.length; i++) {
+  // Only generate cells for interior points (not guards)
+  for (let i = 0; i < interiorPoints.length; i++) {
     const poly = voronoi.cellPolygon(i);
-    if (poly) {
-      cells.push({
-        polygon: poly,
-        color: generateCellColor(i, points.length, settings),
-      });
-    }
+    if (!poly) continue;
+
+    // Inset for laser-cut gaps, then smooth for organic look
+    const inset = insetPolygon(poly, insetAmount);
+    if (!inset) continue; // cell collapsed, skip
+
+    const smoothed = chaikinSmooth(inset, settings.smoothIterations);
+    cells.push({
+      polygon: smoothed,
+      color: generateCellColor(i, interiorPoints.length, settings),
+    });
   }
-  return cells;
+  return { cells, erodedMask };
 }
 
 function renderToCanvas(ctx, canvasWidth, canvasHeight, svgImage, regions, voronoiMap, settings) {
@@ -243,16 +429,18 @@ function renderToCanvas(ctx, canvasWidth, canvasHeight, svgImage, regions, voron
   ctx.drawImage(svgImage, 0, 0, canvasWidth, canvasHeight);
 
   for (const region of regions) {
-    const cells = voronoiMap.get(region.id);
+    const data = voronoiMap.get(region.id);
+    const cells = data?.cells;
+    const clipMask = data?.erodedMask || region.mask;
 
-    // Create mask canvas
+    // Create mask canvas using eroded mask for cell clipping
     const maskCvs = document.createElement('canvas');
     maskCvs.width = canvasWidth;
     maskCvs.height = canvasHeight;
     const maskCtx = maskCvs.getContext('2d');
     const maskImg = maskCtx.createImageData(canvasWidth, canvasHeight);
-    for (let i = 0; i < region.mask.length; i++) {
-      if (region.mask[i]) {
+    for (let i = 0; i < clipMask.length; i++) {
+      if (clipMask[i]) {
         const o = i * 4;
         maskImg.data[o] = 255;
         maskImg.data[o + 1] = 255;
@@ -324,11 +512,13 @@ function exportAsSVG(svgContent, canvasWidth, canvasHeight, regions, voronoiMap,
   const regionGroups = [];
 
   regions.forEach((region, idx) => {
-    const cells = voronoiMap.get(region.id);
+    const data = voronoiMap.get(region.id);
+    const cells = data?.cells;
     if (!cells || cells.length === 0) return;
 
+    const clipMask = data?.erodedMask || region.mask;
     const clipId = `region-clip-${idx}`;
-    const pathD = maskToSVGPath(region.mask, canvasWidth, canvasHeight);
+    const pathD = maskToSVGPath(clipMask, canvasWidth, canvasHeight);
     regionDefs.push(`<clipPath id="${clipId}"><path d="${pathD}"/></clipPath>`);
 
     const polys = cells.map(cell => {
@@ -436,8 +626,8 @@ const App = () => {
     }
     const map = new Map();
     for (const region of regions) {
-      const cells = generateVoronoiForRegion(region, settings, canvasSize.width, canvasSize.height);
-      map.set(region.id, cells);
+      const data = generateVoronoiForRegion(region, settings, canvasSize.width, canvasSize.height);
+      map.set(region.id, data);
     }
     setVoronoiMap(map);
   }, [regions, settings, canvasSize, regenKey]);
@@ -691,6 +881,24 @@ const App = () => {
                     <input type="range" min="5" max="500" value={settings.pointCount}
                       onChange={(e) => updateSetting('pointCount', parseInt(e.target.value))}
                       className="w-full mt-1" />
+                  </label>
+
+                  {/* Gap Width (web thickness for laser cutting) */}
+                  <label className="block">
+                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Gap Width: {settings.gapWidth}px</span>
+                    <input type="range" min="0" max="20" step="0.5" value={settings.gapWidth}
+                      onChange={(e) => updateSetting('gapWidth', parseFloat(e.target.value))}
+                      className="w-full mt-1" />
+                    <span className="text-[10px] text-slate-400">Width of the web between cells. Each cell is a separate island for laser cutting.</span>
+                  </label>
+
+                  {/* Smoothing */}
+                  <label className="block">
+                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Smoothing: {settings.smoothIterations}</span>
+                    <input type="range" min="0" max="4" value={settings.smoothIterations}
+                      onChange={(e) => updateSetting('smoothIterations', parseInt(e.target.value))}
+                      className="w-full mt-1" />
+                    <span className="text-[10px] text-slate-400">0 = angular Voronoi edges, higher = more organic curves.</span>
                   </label>
 
                   {/* Color Mode */}
