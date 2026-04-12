@@ -15,20 +15,21 @@ function cn(...inputs) {
 
 // --- Constants ---
 
-const STORAGE_KEY = 'voronoi-shapes-settings';
+const STORAGE_KEY = 'voronoi-shapes-settings-v2';
 const MAX_CANVAS_SIZE = 900;
 
 const DEFAULT_SETTINGS = {
   pointCount: 100,
-  colorMode: 'random',
+  colorMode: 'outline',
   colorPalette: ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#98D8C8'],
-  strokeWidth: 1,
+  strokeWidth: 0.3,   // mm
   strokeColor: '#333333',
   cellOpacity: 0.85,
   gradientStart: '#FF6B6B',
   gradientEnd: '#4ECDC4',
   fillTolerance: 30,
-  gapWidth: 4,
+  gapWidth: 1,         // mm – material left between cells
+  minCellSize: 2,      // mm – cells smaller than this are dropped
   smoothIterations: 2,
 };
 
@@ -218,6 +219,7 @@ function interpolateColor(c1, c2, t) {
 
 function generateCellColor(index, total, settings) {
   const { colorMode, colorPalette, gradientStart, gradientEnd } = settings;
+  if (colorMode === 'outline') return 'none';
   if (colorMode === 'gradient') {
     return interpolateColor(gradientStart, gradientEnd, total > 1 ? index / (total - 1) : 0);
   }
@@ -320,12 +322,18 @@ function parseSVGDimensions(svgContent) {
   const parser = new DOMParser();
   const doc = parser.parseFromString(svgContent, 'image/svg+xml');
   const svg = doc.querySelector('svg');
+
+  // Detect physical unit from width attribute (e.g. "190.000mm")
+  const widthAttr = svg.getAttribute('width') || '';
+  const unitMatch = widthAttr.match(/(mm|cm|in|pt)$/);
+  const unit = unitMatch ? unitMatch[1] : '';
+
   const vb = svg.getAttribute('viewBox');
   if (vb) {
     const parts = vb.trim().split(/[\s,]+/).map(Number);
-    return { width: parts[2], height: parts[3] };
+    return { width: parts[2], height: parts[3], unit };
   }
-  return { width: parseFloat(svg.getAttribute('width')) || 800, height: parseFloat(svg.getAttribute('height')) || 600 };
+  return { width: parseFloat(widthAttr) || 800, height: parseFloat(svg.getAttribute('height')) || 600, unit };
 }
 
 function maskToSVGPath(mask, width, height, blockSize = 2) {
@@ -379,8 +387,20 @@ function maskToSVGPath(mask, width, height, blockSize = 2) {
   return spans.filter(Boolean).map(s => `M${s.x} ${s.y}h${s.w}v${s.h}h${-s.w}Z`).join('');
 }
 
-function generateVoronoiForRegion(region, settings, canvasWidth, canvasHeight) {
-  const erosionRadius = Math.ceil(settings.gapWidth / 2);
+function polygonArea(polygon) {
+  let area = 0;
+  const n = polygon.length - 1; // last point === first (closed)
+  for (let i = 0; i < n; i++) {
+    const j = (i + 1) % n;
+    area += polygon[i][0] * polygon[j][1];
+    area -= polygon[j][0] * polygon[i][1];
+  }
+  return Math.abs(area) / 2;
+}
+
+function generateVoronoiForRegion(region, settings, canvasWidth, canvasHeight, pxPerUnit) {
+  const gapPx = settings.gapWidth * pxPerUnit;
+  const erosionRadius = Math.ceil(gapPx / 2);
   const erodedMask = erodeMask(region.mask, canvasWidth, canvasHeight, erosionRadius);
   const erodedBounds = computeBounds(erodedMask, canvasWidth, canvasHeight);
   if (!erodedBounds) return { cells: [], erodedMask };
@@ -402,7 +422,10 @@ function generateVoronoiForRegion(region, settings, canvasWidth, canvasHeight) {
   const delaunay = Delaunay.from(allPoints);
   const voronoi = delaunay.voronoi([0, 0, canvasWidth, canvasHeight]);
   const cells = [];
-  const insetAmount = settings.gapWidth / 2; // half gap per side
+  const insetAmount = gapPx / 2; // half gap per side
+  // Min cell area in px² — derived from the linear mm setting
+  const minSizePx = settings.minCellSize * pxPerUnit;
+  const minAreaPx = minSizePx * minSizePx;
 
   // Only generate cells for interior points (not guards)
   for (let i = 0; i < interiorPoints.length; i++) {
@@ -413,6 +436,9 @@ function generateVoronoiForRegion(region, settings, canvasWidth, canvasHeight) {
     const inset = insetPolygon(poly, insetAmount);
     if (!inset) continue; // cell collapsed, skip
 
+    // Drop cells that are too small to cut cleanly
+    if (polygonArea(inset) < minAreaPx) continue;
+
     const smoothed = chaikinSmooth(inset, settings.smoothIterations);
     cells.push({
       polygon: smoothed,
@@ -422,7 +448,7 @@ function generateVoronoiForRegion(region, settings, canvasWidth, canvasHeight) {
   return { cells, erodedMask };
 }
 
-function renderToCanvas(ctx, canvasWidth, canvasHeight, svgImage, regions, voronoiMap, settings) {
+function renderToCanvas(ctx, canvasWidth, canvasHeight, svgImage, regions, voronoiMap, settings, pxPerUnit) {
   ctx.clearRect(0, 0, canvasWidth, canvasHeight);
   ctx.fillStyle = '#ffffff';
   ctx.fillRect(0, 0, canvasWidth, canvasHeight);
@@ -464,12 +490,15 @@ function renderToCanvas(ctx, canvasWidth, canvasHeight, svgImage, regions, voron
           cellCtx.lineTo(cell.polygon[j][0], cell.polygon[j][1]);
         }
         cellCtx.closePath();
-        cellCtx.fillStyle = cell.color;
-        cellCtx.fill();
-        if (settings.strokeWidth > 0) {
+        if (settings.colorMode !== 'outline') {
+          cellCtx.fillStyle = cell.color;
+          cellCtx.fill();
+        }
+        const strokePx = settings.strokeWidth * pxPerUnit;
+        if (strokePx > 0 || settings.colorMode === 'outline') {
           cellCtx.globalAlpha = 1;
           cellCtx.strokeStyle = settings.strokeColor;
-          cellCtx.lineWidth = settings.strokeWidth;
+          cellCtx.lineWidth = settings.colorMode === 'outline' ? Math.max(strokePx, 0.5) : strokePx;
           cellCtx.stroke();
           cellCtx.globalAlpha = settings.cellOpacity;
         }
@@ -507,7 +536,179 @@ function renderToCanvas(ctx, canvasWidth, canvasHeight, svgImage, regions, voron
   ctx.globalCompositeOperation = 'source-over';
 }
 
+// --- SVG path transform helpers ---
+// Bake affine transforms directly into path coordinates so the output
+// has no `transform` attributes (LightBurn ignores them).
+
+function parseTransformAttr(s) {
+  // Returns affine matrix [a, b, c, d, e, f] from a transform string.
+  // SVG matrix(a,b,c,d,e,f): x' = a*x + c*y + e,  y' = b*x + d*y + f
+  if (!s) return [1, 0, 0, 1, 0, 0];
+  const m = s.match(/matrix\(\s*([-\d.e+]+)[\s,]+([-\d.e+]+)[\s,]+([-\d.e+]+)[\s,]+([-\d.e+]+)[\s,]+([-\d.e+]+)[\s,]+([-\d.e+]+)\s*\)/);
+  if (m) return m.slice(1).map(Number);
+  const t = s.match(/translate\(\s*([-\d.e+]+)[\s,]*([-\d.e+]*)\s*\)/);
+  if (t) return [1, 0, 0, 1, Number(t[1]), Number(t[2] || 0)];
+  return [1, 0, 0, 1, 0, 0];
+}
+
+function composeMat(m1, m2) {
+  // m2 applied first, then m1.  [a c e][a c e]
+  const [a1, b1, c1, d1, e1, f1] = m1;
+  const [a2, b2, c2, d2, e2, f2] = m2;
+  return [
+    a1 * a2 + c1 * b2, b1 * a2 + d1 * b2,
+    a1 * c2 + c1 * d2, b1 * c2 + d1 * d2,
+    a1 * e2 + c1 * f2 + e1, b1 * e2 + d1 * f2 + f1,
+  ];
+}
+
+function transformPathD(d, mat) {
+  const [a, b, c, dd, e, f] = mat;
+  const tx = (x, y) => [a * x + c * y + e, b * x + dd * y + f];
+  const fmt = (v) => +v.toFixed(4);
+
+  const tokens = d.match(/[MmLlHhVvCcSsQqTtAaZz]|[-+]?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?/g);
+  if (!tokens) return d;
+
+  let out = '';
+  let i = 0;
+  let cx = 0, cy = 0; // current untransformed position
+
+  while (i < tokens.length) {
+    const cmd = tokens[i++];
+    const abs = cmd === cmd.toUpperCase();
+    const type = cmd.toUpperCase();
+    if (type === 'Z') { out += 'Z'; continue; }
+
+    const sizes = { M: 2, L: 2, T: 2, H: 1, V: 1, C: 6, S: 4, Q: 4, A: 7 };
+    const sz = sizes[type] || 0;
+    const vals = [];
+    while (i < tokens.length && !/[A-Za-z]/.test(tokens[i])) vals.push(parseFloat(tokens[i++]));
+
+    for (let j = 0; j < vals.length; j += sz) {
+      if (type === 'M' || type === 'L' || type === 'T') {
+        let x = vals[j], y = vals[j + 1];
+        if (!abs) { x += cx; y += cy; }
+        cx = x; cy = y;
+        const [nx, ny] = tx(x, y);
+        out += `${type}${fmt(nx)},${fmt(ny)}`;
+      } else if (type === 'H') {
+        let x = vals[j];
+        if (!abs) x += cx;
+        cx = x;
+        const [nx, ny] = tx(x, cy);
+        out += `L${fmt(nx)},${fmt(ny)}`;
+      } else if (type === 'V') {
+        let y = vals[j];
+        if (!abs) y += cy;
+        cy = y;
+        const [nx, ny] = tx(cx, y);
+        out += `L${fmt(nx)},${fmt(ny)}`;
+      } else if (type === 'C') {
+        let [x1, y1, x2, y2, x, y] = vals.slice(j, j + 6);
+        if (!abs) { x1 += cx; y1 += cy; x2 += cx; y2 += cy; x += cx; y += cy; }
+        cx = x; cy = y;
+        const [nx1, ny1] = tx(x1, y1);
+        const [nx2, ny2] = tx(x2, y2);
+        const [nx, ny] = tx(x, y);
+        out += `C${fmt(nx1)},${fmt(ny1)} ${fmt(nx2)},${fmt(ny2)} ${fmt(nx)},${fmt(ny)}`;
+      } else if (type === 'S') {
+        let [x2, y2, x, y] = vals.slice(j, j + 4);
+        if (!abs) { x2 += cx; y2 += cy; x += cx; y += cy; }
+        cx = x; cy = y;
+        const [nx2, ny2] = tx(x2, y2);
+        const [nx, ny] = tx(x, y);
+        out += `S${fmt(nx2)},${fmt(ny2)} ${fmt(nx)},${fmt(ny)}`;
+      } else if (type === 'Q') {
+        let [x1, y1, x, y] = vals.slice(j, j + 4);
+        if (!abs) { x1 += cx; y1 += cy; x += cx; y += cy; }
+        cx = x; cy = y;
+        const [nx1, ny1] = tx(x1, y1);
+        const [nx, ny] = tx(x, y);
+        out += `Q${fmt(nx1)},${fmt(ny1)} ${fmt(nx)},${fmt(ny)}`;
+      } else if (type === 'A') {
+        let [rx, ry, xRot, la, sw, x, y] = vals.slice(j, j + 7);
+        if (!abs) { x += cx; y += cy; }
+        cx = x; cy = y;
+        const det = a * dd - b * c;
+        if (det < 0) sw = sw ? 0 : 1; // flip sweep on mirror
+        const [nx, ny] = tx(x, y);
+        out += `A${fmt(rx)},${fmt(ry)} ${xRot} ${la} ${sw} ${fmt(nx)},${fmt(ny)}`;
+      }
+    }
+  }
+  return out;
+}
+
+function flattenOriginalPaths(svgContent) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(svgContent, 'image/svg+xml');
+  const svg = doc.querySelector('svg');
+
+  // ViewBox offset — shift origin to (0,0)
+  const vb = svg.getAttribute('viewBox');
+  const [vbX, vbY] = vb ? vb.trim().split(/[\s,]+/).map(Number) : [0, 0];
+  const vbMat = [1, 0, 0, 1, -vbX, -vbY];
+
+  const paths = svg.querySelectorAll('path');
+  const lines = [];
+  for (const el of paths) {
+    const elMat = parseTransformAttr(el.getAttribute('transform'));
+    const mat = composeMat(vbMat, elMat); // element transform first, then viewBox shift
+
+    const d = el.getAttribute('d');
+    if (!d) continue;
+    const newD = transformPathD(d, mat);
+
+    // Extract stroke props from CSS style attribute
+    let stroke = '#000000', strokeWidth = '0.05';
+    const style = el.getAttribute('style') || '';
+    const sm = style.match(/stroke\s*:\s*([^;]+)/);
+    if (sm) stroke = sm[1].trim();
+    const swm = style.match(/stroke-width\s*:\s*([^;]+)/);
+    if (swm) strokeWidth = parseFloat(swm[1]).toString();
+
+    lines.push(`  <path d="${newD}" fill="none" stroke="${stroke}" stroke-width="${strokeWidth}"/>`);
+  }
+  return lines;
+}
+
 function exportAsSVG(svgContent, canvasWidth, canvasHeight, regions, voronoiMap, settings, svgDims) {
+  const isOutline = settings.colorMode === 'outline';
+  const unit = svgDims.unit || '';
+  // Scale factor: canvas pixels → physical SVG units (e.g. mm)
+  const pxToPhys = svgDims.width / canvasWidth;
+
+  // In outline mode: flat list of polygons in physical units (mm), no clip
+  // paths, no nested SVG. Original frame paths included. LightBurn-compatible.
+  if (isOutline) {
+    const physW = svgDims.width;
+    const physH = svgDims.height;
+    const parts = [];
+
+    // Include original SVG paths (frame outlines) flattened for LightBurn
+    const origPaths = flattenOriginalPaths(svgContent);
+    parts.push(...origPaths);
+
+    // Voronoi cell outlines
+    for (const region of regions) {
+      const data = voronoiMap.get(region.id);
+      const cells = data?.cells;
+      if (!cells || cells.length === 0) continue;
+      for (const cell of cells) {
+        const pts = cell.polygon.map(p =>
+          `${(p[0] * pxToPhys).toFixed(3)},${(p[1] * pxToPhys).toFixed(3)}`
+        ).join(' ');
+        const sw = Math.max(settings.strokeWidth, 0.1);
+        parts.push(`  <polygon points="${pts}" fill="none" stroke="${settings.strokeColor}" stroke-width="${sw}"/>`);
+      }
+    }
+    return `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="${physW}${unit}" height="${physH}${unit}" viewBox="0 0 ${physW} ${physH}">
+${parts.join('\n')}
+</svg>`;
+  }
+
   const regionDefs = [];
   const regionGroups = [];
 
@@ -521,9 +722,10 @@ function exportAsSVG(svgContent, canvasWidth, canvasHeight, regions, voronoiMap,
     const pathD = maskToSVGPath(clipMask, canvasWidth, canvasHeight);
     regionDefs.push(`<clipPath id="${clipId}"><path d="${pathD}"/></clipPath>`);
 
+    const strokePx = settings.strokeWidth / pxToPhys; // convert mm back to canvas pixels
     const polys = cells.map(cell => {
       const pts = cell.polygon.map(p => `${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' ');
-      return `<polygon points="${pts}" fill="${cell.color}" fill-opacity="${settings.cellOpacity}" stroke="${settings.strokeColor}" stroke-width="${settings.strokeWidth}"/>`;
+      return `<polygon points="${pts}" fill="${cell.color}" fill-opacity="${settings.cellOpacity}" stroke="${settings.strokeColor}" stroke-width="${strokePx.toFixed(1)}"/>`;
     }).join('\n      ');
 
     regionGroups.push(`<g clip-path="url(#${clipId})">\n      ${polys}\n    </g>`);
@@ -565,6 +767,10 @@ const App = () => {
   });
   const [settingsOpen, setSettingsOpen] = useState(true);
   const [regenKey, setRegenKey] = useState(0);
+
+  // Pixels per physical unit (e.g. mm). When no SVG loaded, default 1:1.
+  const pxPerUnit = svgDims ? canvasSize.width / svgDims.width : 1;
+  const displayUnit = svgDims?.unit || 'px';
 
   const canvasRef = useRef(null);
   const thickCanvasRef = useRef(null);
@@ -626,11 +832,11 @@ const App = () => {
     }
     const map = new Map();
     for (const region of regions) {
-      const data = generateVoronoiForRegion(region, settings, canvasSize.width, canvasSize.height);
+      const data = generateVoronoiForRegion(region, settings, canvasSize.width, canvasSize.height, pxPerUnit);
       map.set(region.id, data);
     }
     setVoronoiMap(map);
-  }, [regions, settings, canvasSize, regenKey]);
+  }, [regions, settings, canvasSize, regenKey, pxPerUnit]);
 
   // Render canvas
   useEffect(() => {
@@ -639,8 +845,8 @@ const App = () => {
     cvs.width = canvasSize.width;
     cvs.height = canvasSize.height;
     const ctx = cvs.getContext('2d');
-    renderToCanvas(ctx, canvasSize.width, canvasSize.height, svgImage, regions, voronoiMap, settings);
-  }, [svgImage, regions, voronoiMap, settings, canvasSize]);
+    renderToCanvas(ctx, canvasSize.width, canvasSize.height, svgImage, regions, voronoiMap, settings, pxPerUnit);
+  }, [svgImage, regions, voronoiMap, settings, canvasSize, pxPerUnit]);
 
   const handleFileUpload = (e) => {
     const file = e.target.files?.[0];
@@ -795,6 +1001,7 @@ const App = () => {
                 <span className="text-xs font-bold text-slate-500 flex items-center gap-2">
                   <MousePointer2 size={14} />
                   Click regions to select/deselect
+                  {svgDims && <span className="text-slate-400 font-normal ml-1">({svgDims.width} × {svgDims.height} {displayUnit})</span>}
                 </span>
                 <div className="flex gap-2">
                   <button
@@ -868,7 +1075,7 @@ const App = () => {
               >
                 <span className="flex items-center gap-2 text-sm font-bold text-slate-700">
                   <Settings2 size={16} />
-                  Settings
+                  Laser Cut Settings
                 </span>
                 {settingsOpen ? <ChevronUp size={16} className="text-slate-400" /> : <ChevronDown size={16} className="text-slate-400" />}
               </button>
@@ -883,13 +1090,22 @@ const App = () => {
                       className="w-full mt-1" />
                   </label>
 
-                  {/* Gap Width (web thickness for laser cutting) */}
+                  {/* Web Width (material between cuts) */}
                   <label className="block">
-                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Gap Width: {settings.gapWidth}px</span>
-                    <input type="range" min="0" max="20" step="0.5" value={settings.gapWidth}
+                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Web Width: {settings.gapWidth} {displayUnit}</span>
+                    <input type="range" min="0" max="10" step="0.1" value={settings.gapWidth}
                       onChange={(e) => updateSetting('gapWidth', parseFloat(e.target.value))}
                       className="w-full mt-1" />
-                    <span className="text-[10px] text-slate-400">Width of the web between cells. Each cell is a separate island for laser cutting.</span>
+                    <span className="text-[10px] text-slate-400">Material left between cells. Must be thick enough for structural strength.</span>
+                  </label>
+
+                  {/* Min Cell Size */}
+                  <label className="block">
+                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Min Cell Size: {settings.minCellSize} {displayUnit}</span>
+                    <input type="range" min="0" max="20" step="0.5" value={settings.minCellSize}
+                      onChange={(e) => updateSetting('minCellSize', parseFloat(e.target.value))}
+                      className="w-full mt-1" />
+                    <span className="text-[10px] text-slate-400">Cells smaller than this are dropped. Prevents tiny pieces that weaken the cut.</span>
                   </label>
 
                   {/* Smoothing */}
@@ -907,6 +1123,7 @@ const App = () => {
                     <select value={settings.colorMode}
                       onChange={(e) => updateSetting('colorMode', e.target.value)}
                       className="mt-1 block w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium">
+                      <option value="outline">Outline only (laser cut)</option>
                       <option value="random">Random from palette</option>
                       <option value="palette">Sequential from palette</option>
                       <option value="gradient">Gradient</option>
@@ -914,7 +1131,7 @@ const App = () => {
                   </label>
 
                   {/* Palette Colors */}
-                  {(settings.colorMode === 'random' || settings.colorMode === 'palette') && (
+                  {(settings.colorMode === 'random' || settings.colorMode === 'palette') && settings.colorMode !== 'outline' && (
                     <div>
                       <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Palette</span>
                       <div className="flex items-center gap-1.5 mt-1 flex-wrap">
@@ -959,8 +1176,8 @@ const App = () => {
                   {/* Stroke */}
                   <div className="flex gap-4 items-end">
                     <label className="flex-1">
-                      <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Stroke Width: {settings.strokeWidth}</span>
-                      <input type="range" min="0" max="5" step="0.5" value={settings.strokeWidth}
+                      <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Stroke Width: {settings.strokeWidth} {displayUnit}</span>
+                      <input type="range" min="0" max="2" step="0.05" value={settings.strokeWidth}
                         onChange={(e) => updateSetting('strokeWidth', parseFloat(e.target.value))}
                         className="w-full mt-1" />
                     </label>
@@ -973,12 +1190,14 @@ const App = () => {
                   </div>
 
                   {/* Opacity */}
+                  {settings.colorMode !== 'outline' && (
                   <label className="block">
                     <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Cell Opacity: {Math.round(settings.cellOpacity * 100)}%</span>
                     <input type="range" min="0" max="1" step="0.05" value={settings.cellOpacity}
                       onChange={(e) => updateSetting('cellOpacity', parseFloat(e.target.value))}
                       className="w-full mt-1" />
                   </label>
+                  )}
 
                   {/* Fill Tolerance */}
                   <label className="block">
