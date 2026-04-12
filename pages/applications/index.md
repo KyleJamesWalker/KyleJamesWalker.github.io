@@ -10,6 +10,7 @@ teaser: "Web applications and tools."
     <ul class="side-nav">
       <li><a href="{{ site.baseurl }}/applications/cardboard-slicer/">Cardboard Slicer</a> — Slice 3D STL models for laser-cut cardboard assembly.</li>
       <li><a href="{{ site.baseurl }}/applications/lead-scanner/">Lead Scanner</a> — Mobile lead collection for conference exhibitors.</li>
+      <li><a href="{{ site.baseurl }}/applications/voronoi-shapes/">Voronoi Shapes</a> — Generate Voronoi patterns within SVG regions.</li>
     </ul>
   </div>
 </div>

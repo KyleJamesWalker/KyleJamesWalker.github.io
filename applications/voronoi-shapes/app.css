@@ -1,0 +1,28 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-slate-50 text-slate-900;
+  }
+}
+
+input[type="range"] {
+  @apply accent-violet-600;
+}
+
+input[type="color"] {
+  @apply w-8 h-8 rounded cursor-pointer border border-slate-300;
+  padding: 1px;
+}
+
+.canvas-container {
+  cursor: crosshair;
+}
+
+.canvas-container canvas {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
