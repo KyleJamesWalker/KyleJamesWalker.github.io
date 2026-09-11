@@ -47,6 +47,9 @@ jobs:
         env:
           JEKYLL_ENV: production
 
+      - name: Minify Dirty Little Zine Plus
+        run: npm run build:zine
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v5.0.0
 
