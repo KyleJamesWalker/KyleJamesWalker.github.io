@@ -19,6 +19,12 @@ python3 -m http.server 8731
 Deploy by copying the directory to Cloudflare Pages, GitHub Pages, Netlify, S3,
 or anything else that serves files. There is nothing to configure.
 
+The app itself has no build step and none is required to run or host it. On
+this site only, `scripts/minify-zine.mjs` bundles and minifies the deployed
+copy into `_site` during CI, which cuts the served payload by about 46% and
+takes it from eleven requests to two. It never touches the source tree, so what
+is in the repo stays readable and directly runnable.
+
 ## What it does that the original does not
 
 | | Original | Here |
