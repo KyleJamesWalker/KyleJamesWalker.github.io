@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: blob:; media-src blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self'; connect-src 'none'; form-action 'none'; frame-ancestors 'none'; base-uri 'self'; object-src 'none'">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Dirty Little Zine Plus</title>
+<meta name="description" content="Build a printable 8-page zine from your photos, entirely in the browser. Multi-photo layouts, print filters, pan and zoom, vector-quality PDF.">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Barlow+Condensed:wght@500;700&family=Bebas+Neue&family=Courier+Prime:wght@400;700&family=Inter:wght@400;500;600;700&family=Jost:wght@400;600&family=Oswald:wght@400;600&family=Playfair+Display:wght@600;800&family=Press+Start+2P&family=Special+Elite&family=Syncopate:wght@400;700&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">Dirty Little Zine<em>Plus</em></div>
+  <a class="credit" href="https://dirtylittlezine.com/" target="_blank" rel="noopener noreferrer">inspired by dirtylittlezine.com</a>
+
+  <div class="seg" id="viewToggle" role="group" aria-label="View">
+    <button type="button" data-view="page" class="on">Pages</button>
+    <button type="button" data-view="sheet">Print sheet</button>
+  </div>
+
+  <div class="grow"></div>
+
+  <label class="field compact">
+    <span>Paper</span>
+    <select id="paper"></select>
+  </label>
+
+  <label class="chk"><input type="checkbox" id="guides" checked><span>Guides</span></label>
+
+  <button type="button" id="exportPng" class="ghost">PNG</button>
+  <button type="button" id="exportPdf" class="primary">Export PDF</button>
+  <button type="button" id="resetAll" class="ghost danger" title="Start over">Reset</button>
+</header>
+
+<main>
+  <nav class="rail" id="rail" aria-label="Pages"></nav>
+
+  <section class="stage" id="stage">
+    <div class="stage-wrap" id="stageWrap">
+      <canvas id="pageCanvas"></canvas>
+      <canvas id="sheetCanvas" hidden></canvas>
+    </div>
+    <p class="hint" id="hint"></p>
+  </section>
+
+  <aside class="inspector" id="inspector" aria-label="Page settings"></aside>
+</main>
+
+<div class="drop-veil" id="dropVeil" hidden><span>Drop photos</span></div>
+
+<div class="toast" id="toast" hidden></div>
+
+<input type="file" id="filePicker" accept="image/*" multiple hidden>
+<input type="file" id="fontPicker" accept=".ttf,.otf,.woff,.woff2,.ttc" multiple hidden>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
