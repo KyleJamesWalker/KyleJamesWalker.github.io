@@ -5,6 +5,7 @@ import { sheetGeometry, renderBoxes, panelRect, fitRect, PANELS, SPREADS, MM_PER
 import { layoutRects } from './layouts.js';
 import { cachedPhotoCanvas } from './filters.js';
 import { fontById, TITLE_SCALE, CAPTION_SCALE } from './state.js';
+import { qrFor } from './qrcode.js';
 
 const defaultImageFor = p => p.img;
 
@@ -111,11 +112,68 @@ export function drawContent(ctx, state, box, rect, { pxPerMM, imageFor, forHitTe
   return cells;
 }
 
-/** Cover lettering and caption only, on whatever is already there. */
+/** Cover lettering, caption and QR code only, on whatever is already there. */
 export function drawTextLayer(ctx, state, box, rect, pxPerMM) {
   const cover = coverConfigFor(state, box);
   if (cover) drawCoverText(ctx, rect, cover, pxPerMM);
   if (box.panel.caption.text.trim()) drawCaption(ctx, rect, box.panel.caption, pxPerMM);
+  if (box.panel.qr.text.trim()) drawQR(ctx, rect, box.panel.qr, pxPerMM);
+}
+
+export const QR_QUIET_MODULES = 4;
+
+/** Side of the printed plate, clamped to what the page can hold. */
+export function qrSide(cfg, rect, pxPerMM) {
+  const pad = rect.w * 0.06;
+  return Math.min(cfg.sizeMM * pxPerMM, rect.w - pad * 2, rect.h - pad * 2);
+}
+
+function drawQR(ctx, rect, cfg, pxPerMM) {
+  let code;
+  try {
+    code = qrFor(cfg.text.trim(), cfg.ecc);
+  } catch {
+    return;
+  }
+
+  const pad = rect.w * 0.06;
+  const side = qrSide(cfg, rect, pxPerMM);
+  const x = cfg.align === 'left' ? rect.x + pad
+    : cfg.align === 'right' ? rect.x + rect.w - pad - side
+    : rect.x + (rect.w - side) / 2;
+  const y = cfg.valign === 'top' ? rect.y + pad
+    : cfg.valign === 'bottom' ? rect.y + rect.h - pad - side
+    : rect.y + (rect.h - side) / 2;
+
+  const m = side / (code.size + QR_QUIET_MODULES * 2);
+  // Snapping module edges to whole pixels keeps the print crisp, but below
+  // about a pixel per module it would swallow whole rows instead.
+  const snap = m >= 1.5;
+  const edge = (origin, i) => (snap ? Math.round(origin + i * m) : origin + i * m);
+  const ox = x + QR_QUIET_MODULES * m;
+  const oy = y + QR_QUIET_MODULES * m;
+
+  ctx.save();
+  ctx.shadowColor = 'transparent';
+  ctx.shadowBlur = 0;
+  ctx.shadowOffsetY = 0;
+  if (cfg.plate) {
+    ctx.fillStyle = cfg.light;
+    ctx.fillRect(x, y, side, side);
+  }
+  ctx.fillStyle = cfg.dark;
+  ctx.beginPath();
+  for (let row = 0; row < code.size; row++) {
+    const y0 = edge(oy, row);
+    const y1 = edge(oy, row + 1);
+    for (let col = 0; col < code.size; col++) {
+      if (!code.get(col, row)) continue;
+      const x0 = edge(ox, col);
+      ctx.rect(x0, y0, edge(ox, col + 1) - x0, y1 - y0);
+    }
+  }
+  ctx.fill();
+  ctx.restore();
 }
 
 /** Cell rects for the currently rendered content, for pointer hit-testing. */

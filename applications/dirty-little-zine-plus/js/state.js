@@ -53,6 +53,13 @@ function makeCaption() {
   };
 }
 
+function makeQR() {
+  return {
+    text: '', sizeMM: 26, ecc: 'M', align: 'right', valign: 'bottom',
+    dark: '#111111', light: '#ffffff', plate: true,
+  };
+}
+
 export function makePanelContent() {
   return {
     layout: 'single',
@@ -62,6 +69,7 @@ export function makePanelContent() {
     bg: '#ffffff',
     photos: [],
     caption: makeCaption(),
+    qr: makeQR(),
   };
 }
 
