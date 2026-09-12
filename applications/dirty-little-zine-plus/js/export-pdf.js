@@ -102,6 +102,7 @@ export async function exportPDF(state, { imageFor, onProgress = () => {} } = {})
     }
 
     const hasText = content.caption.text.trim()
+      || content.qr.text.trim()
       || (box.kind === 'panel' && (box.meta.role === 'front' || box.meta.role === 'back'));
 
     if (hasText) {

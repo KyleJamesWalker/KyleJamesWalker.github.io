@@ -36,6 +36,21 @@ is in the repo stays readable and directly runnable.
 | Typefaces | 11 built in | built-ins plus any font file you add |
 | Text colour | white or black | white, black, or custom ink and shadow |
 | Paper | Letter, A4, A3 | adds Tabloid |
+| QR code | back cover | any page, nine positions, sized in mm |
+
+### QR codes
+
+Any page takes a QR code: paste a link, pick a size in millimetres, and place it
+in one of nine positions. `qrcode.js` encodes it in byte mode, choosing the
+smallest of the 40 versions that fits, so there is no service call and nothing
+to block. Correction level L through H is a control because it is a real
+trade-off on paper: H survives a fold across the code, L keeps the modules
+large.
+
+The plate the code sits on includes the four-module quiet zone the spec
+requires, and the inspector reports the resulting millimetres per module,
+warning below 0.5mm, which is roughly where a phone camera starts to fail on
+laser-printed paper.
 
 ### Effects
 
@@ -81,6 +96,7 @@ Everything is an ES module, loaded directly. No bundler.
 | `fonts.js` | User font registration, metric calibration, persistence |
 | `photo-store.js` | Decode, downscale to two variants, IndexedDB |
 | `storage.js` | Text and config in localStorage |
+| `qrcode.js` | QR encoding: byte mode, versions 1-40, mask selection |
 | `renderer.js` | Canvas drawing, shared by preview and export |
 | `export-pdf.js` | pdf-lib assembly, PNG sheet export |
 | `app.js` | UI, pointer interaction, ingest |
@@ -97,14 +113,16 @@ demand and releases it afterwards.
 The original renders the entire 300 DPI sheet to a canvas, converts it to a
 JPEG data URL, and drops that single image onto the page. That flattens
 lettering into the photo raster and produces large files. Here each photo is
-embedded as its own JPEG at its final cropped resolution, and cover text and
-captions ride on transparent PNG overlays, so text edges stay sharp.
+embedded as its own JPEG at its final cropped resolution, and cover text,
+captions, and QR codes ride on transparent PNG overlays, so their edges stay
+sharp.
 
 ## Privacy
 
-Photos never leave the browser. There is no `fetch`, `XMLHttpRequest`,
-`WebSocket`, or `sendBeacon` anywhere in `js/`, and `index.html` ships a CSP
-with `connect-src 'none'` that makes it enforced rather than merely intended.
+Photos never leave the browser, and neither does whatever a QR code encodes.
+There is no `fetch`, `XMLHttpRequest`, `WebSocket`, or `sendBeacon` anywhere in
+`js/`, and `index.html` ships a CSP with `connect-src 'none'` that makes it
+enforced rather than merely intended.
 
 pdf-lib is vendored in `vendor/` so no third-party script host is contacted.
 The only external request is the Google Fonts stylesheet; every font stack has

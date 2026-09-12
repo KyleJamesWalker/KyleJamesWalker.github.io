@@ -16,7 +16,8 @@ import {
   putPhoto, getPhoto, deletePhoto, pruneExcept, makeVariants, blobToImage,
   fileToImage, storageAvailable, FULL_MAX_EDGE,
 } from './photo-store.js';
-import { renderSheet, renderPage } from './renderer.js';
+import { renderSheet, renderPage, qrSide, QR_QUIET_MODULES } from './renderer.js';
+import { qrFor, ECC_LEVELS } from './qrcode.js';
 import { exportPDF, exportPNG } from './export-pdf.js';
 
 const MAX_ZOOM = 6;
@@ -570,6 +571,7 @@ function buildInspector() {
 
   if (photo) kids.push(...photoSections(content, photo));
   kids.push(captionSection(content));
+  kids.push(qrSection(content, page));
   const fonts = fontsSection();
   if (fonts) kids.push(fonts);
   if (page.kind === 'panel' && (page.meta.role === 'front' || page.meta.role === 'back')) {
@@ -777,6 +779,57 @@ function captionSection(content) {
         }),
         h('span', { text: 'Shadow' }))),
     h('div', { class: 'row wrap' }, colorControls(cap)));
+}
+
+function qrNote(qr, page) {
+  const text = qr.text.trim();
+  if (!text) return 'Generated on the page. Nothing is fetched and nothing is sent.';
+
+  let code;
+  try {
+    code = qrFor(text, qr.ecc);
+  } catch {
+    return 'Too long to encode. Shorten it, or drop to a lower correction level.';
+  }
+
+  const mmPerModule = qrSide(qr, { w: page.widthMM, h: page.heightMM }, 1) / (code.size + QR_QUIET_MODULES * 2);
+  const warn = mmPerModule < 0.5 ? ' - under 0.5mm a module, print it bigger' : '';
+  return `Version ${code.version}, ${code.size}x${code.size} modules, ${mmPerModule.toFixed(2)}mm each${warn}`;
+}
+
+function qrSection(content, page) {
+  const qr = content.qr;
+  const note = h('p', { class: 'note' });
+  const sync = () => { note.textContent = qrNote(qr, page); };
+  sync();
+
+  const colorInput = key => h('input', {
+    type: 'color', value: qr[key],
+    oninput: e => { qr[key] = e.target.value; refresh({ inspector: false }); },
+  });
+
+  return section('QR code',
+    field('Link or text', textInput(qr.text, v => { qr.text = v; sync(); refresh({ inspector: false }); }, 'https://')),
+    slider('Size', qr.sizeMM, 10, 60, 1, v => `${v}mm`,
+      v => { qr.sizeMM = v; sync(); refresh({ inspector: false }); }),
+    h('div', { class: 'row wrap' },
+      seg(qr.align, [['left', '◧'], ['center', '▣'], ['right', '◨']], v => { qr.align = v; refresh(); }),
+      seg(qr.valign, [['top', '▲'], ['center', '●'], ['bottom', '▼']], v => { qr.valign = v; refresh(); })),
+    h('div', { class: 'row wrap' },
+      h('span', { class: 'note', text: 'Correction' }),
+      seg(qr.ecc, ECC_LEVELS.map(l => [l, l]), v => { qr.ecc = v; refresh(); })),
+    h('div', { class: 'row wrap' },
+      h('label', { class: 'chk' },
+        h('input', {
+          type: 'checkbox', ...(qr.plate ? { checked: true } : {}),
+          onchange: e => { qr.plate = e.target.checked; refresh(); },
+        }),
+        h('span', { text: 'Plate' })),
+      h('span', { class: 'note', text: 'Ink' }),
+      colorInput('dark'),
+      qr.plate ? h('span', { class: 'note', text: 'Paper' }) : null,
+      qr.plate ? colorInput('light') : null),
+    note);
 }
 
 function fontsSection() {
