@@ -3,6 +3,12 @@
  *
  * Everything in here works in millimetres with SVG screen coordinates
  * (x right, y down). One user unit in the emitted SVG equals one millimetre.
+ *
+ * All three styles share one roll-end core, the FEFCO 0400-series construction:
+ * each end of the base carries a side wall, a narrow roll panel, and a return
+ * panel that folds back down inside and locks into slots cut in the base. The
+ * end flaps of the front and back walls are trapped inside that roll, which is
+ * what makes the ends triple-thick and the whole box glue-free.
  */
 
 export const MM_PER_INCH = 25.4;
@@ -11,9 +17,9 @@ export const toMM = (value, unit) => (unit === 'in' ? value * MM_PER_INCH : valu
 export const fromMM = (value, unit) => (unit === 'in' ? value / MM_PER_INCH : value);
 
 export const VARIANTS = [
-  { id: 'tray', name: 'Open tray', blurb: 'Four walls, no lid. Corner tabs glue inside.' },
-  { id: 'mailer', name: 'Locking flap lid', blurb: 'Hinged lid with a tuck flap that locks into the front wall.' },
-  { id: 'sliplid', name: 'Slip-on lid', blurb: 'Two trays: a base plus a shallow lid that slides over it.' },
+  { id: 'tray', name: 'Open tray', blurb: 'Roll-end tray, no lid. Locks into the base, no glue.' },
+  { id: 'mailer', name: 'Locking flap lid', blurb: 'The same tray plus a hinged lid whose eared flap tucks inside the front wall.' },
+  { id: 'sliplid', name: 'Slip-on lid', blurb: 'Two roll-end trays: a base and a shallow lid that slides over it.' },
 ];
 
 /** Sheet margin around the nested blanks. */
@@ -23,183 +29,223 @@ const PIECE_GAP = 8;
 
 const r = (n) => Math.round(n * 1000) / 1000;
 
-const polygon = (points) => ({
-  d: points.map(([x, y], i) => `${i ? 'L' : 'M'}${r(x)} ${r(y)}`).join(' ') + ' Z',
-});
+/** Path builder that records its own corner points so bounds stay exact. */
+const outline = () => {
+  const parts = [];
+  const points = [];
+  const api = {
+    points,
+    move(x, y) {
+      parts.push(`M${r(x)} ${r(y)}`);
+      points.push([x, y]);
+      return api;
+    },
+    line(x, y) {
+      parts.push(`L${r(x)} ${r(y)}`);
+      points.push([x, y]);
+      return api;
+    },
+    arc(radius, x, y) {
+      parts.push(`A${r(radius)} ${r(radius)} 0 0 1 ${r(x)} ${r(y)}`);
+      points.push([x, y]);
+      return api;
+    },
+    path() {
+      return { d: `${parts.join(' ')} Z` };
+    },
+  };
+  return api;
+};
 
 const segment = (x1, y1, x2, y2) => ({ d: `M${r(x1)} ${r(y1)}L${r(x2)} ${r(y2)}` });
 
-/** Stadium-shaped slot, centred on (cx, cy), running along x. */
+/** Stadium-shaped slot centred on (cx, cy), long axis running along y. */
 const slot = (cx, cy, length, width) => {
   const rad = width / 2;
-  const x1 = cx - length / 2 + rad;
-  const x2 = cx + length / 2 - rad;
+  const y1 = cy - length / 2 + rad;
+  const y2 = cy + length / 2 - rad;
   return {
     d:
-      `M${r(x1)} ${r(cy - rad)}L${r(x2)} ${r(cy - rad)}` +
-      `A${r(rad)} ${r(rad)} 0 0 1 ${r(x2)} ${r(cy + rad)}` +
-      `L${r(x1)} ${r(cy + rad)}` +
-      `A${r(rad)} ${r(rad)} 0 0 1 ${r(x1)} ${r(cy - rad)}Z`,
+      `M${r(cx - rad)} ${r(y1)}L${r(cx - rad)} ${r(y2)}` +
+      `A${r(rad)} ${r(rad)} 0 0 0 ${r(cx + rad)} ${r(y2)}` +
+      `L${r(cx + rad)} ${r(y1)}` +
+      `A${r(rad)} ${r(rad)} 0 0 0 ${r(cx - rad)} ${r(y1)}Z`,
   };
 };
 
-/** Horizontal fold line broken around each [from, to] gap so scores never cross a slot. */
-const foldWithGaps = (y, x1, x2, gaps) => {
-  const sorted = [...gaps].sort((a, b) => a[0] - b[0]);
-  const out = [];
-  let cursor = x1;
-  for (const [from, to] of sorted) {
-    if (from > cursor) out.push(segment(cursor, y, from, y));
-    cursor = Math.max(cursor, to);
-  }
-  if (cursor < x2) out.push(segment(cursor, y, x2, y));
-  return out;
-};
-
-const boundsOf = (points) => {
-  const xs = points.map((p) => p[0]);
-  const ys = points.map((p) => p[1]);
-  return {
-    width: Math.max(...xs) - Math.min(...xs),
-    height: Math.max(...ys) - Math.min(...ys),
-  };
-};
+const boundsOf = (points) => ({
+  width: Math.max(...points.map((p) => p[0])),
+  height: Math.max(...points.map((p) => p[1])),
+});
 
 /**
- * Open tray: bottom panel with four walls folded up and a glue tab on each
- * end of the two short walls. Also used for the base and lid of a slip-on set.
+ * One roll-end piece, with or without a hinged lid.
+ *
+ * Panel columns across the blank, left to right:
+ *   lock tabs | return | roll | side wall | BASE | side wall | roll | return | lock tabs
+ *
+ * Panel rows down the blank (lid rows only when `withLid`):
+ *   tuck flap | lid | back wall | BASE | front wall
  */
-export function trayPiece({ L, W, H, t, tabWidth, label }) {
-  const tab = Math.min(tabWidth, H);
-  const ch = Math.max(0, Math.min(2, tab / 3, H / 3));
+export function rollEndPiece({ L, W, H, t, lockWidth, slotClearance, withLid, lidDepth, label }) {
+  const roll = 2 * t;
+  const ret = Math.max(1, H - t);
+  const lockLength = 2 * t;
+  const lockW = Math.max(2, Math.min(lockWidth, W * 0.4));
+  const flap = Math.max(1, Math.min(H, (W - 2) / 2));
+  const wing = Math.max(1, H - 2 * t);
+  const tuckHeight = Math.max(1, H - t);
+  // Relief at the front corner, where the ear and the wing both fold inwards.
+  const wingLead = Math.max(2 * t + 2, H * 0.12);
+  const wingTail = t + 1;
+  const earRadius = Math.max(0, Math.min(wing * 0.9, tuckHeight * 0.9));
+  const tabCh = Math.max(0, Math.min(1.5, lockLength / 2, lockW / 6));
+  const wingCh = Math.max(0, Math.min(2, wing / 3));
 
   const x0 = 0;
-  const x1 = H;
-  const x2 = H + L;
-  const x3 = H + L + H;
-  const y0 = 0;
-  const y1 = H;
-  const y2 = H + W;
-  const y3 = H + W + H;
-  const tabTop = y1 - tab;
-  const tabBottom = y2 + tab;
+  const x1 = lockLength;
+  const x2 = x1 + ret;
+  const x3 = x2 + roll;
+  const x4 = x3 + H;
+  const x5 = x4 + L;
+  const x6 = x5 + H;
+  const x7 = x6 + roll;
+  const x8 = x7 + ret;
+  const x9 = x8 + lockLength;
 
-  const outline = [
-    [x1, y0], [x2, y0],
-    [x2, tabTop], [x3 - ch, tabTop], [x3, tabTop + ch],
-    [x3, tabBottom - ch], [x3 - ch, tabBottom], [x2, tabBottom],
-    [x2, y3], [x1, y3],
-    [x1, tabBottom], [x0 + ch, tabBottom], [x0, tabBottom - ch],
-    [x0, tabTop + ch], [x0 + ch, tabTop], [x1, tabTop],
+  const flapL = x4 - flap;
+  const flapR = x5 + flap;
+  const wingL = x4 - wing;
+  const wingR = x5 + wing;
+  const earL = x4 - wing;
+  const earR = x5 + wing;
+
+  const yTop = 0;
+  const yTuck = withLid ? tuckHeight : 0;
+  const yLid = withLid ? yTuck + lidDepth : 0;
+  const y1 = yLid + H;
+  const y2 = y1 + W;
+  const y3 = y2 + H;
+  const wingTop = yTuck + wingLead;
+  const wingBottom = yLid - wingTail;
+
+  const lockY = [y1 + W * 0.28, y1 + W * 0.72];
+
+  // The return panel lands one board inside the side wall, so the slots that
+  // catch its tabs sit that far in from the base edge.
+  const slotInset = Math.max(0, roll - t);
+  const slotWidth = t + slotClearance;
+
+  const o = outline();
+  if (withLid) {
+    o.move(earL, yTuck)
+      .line(earL, yTop + earRadius)
+      .arc(earRadius, earL + earRadius, yTop)
+      .line(earR - earRadius, yTop)
+      .arc(earRadius, earR, yTop + earRadius)
+      .line(earR, yTuck)
+      .line(x5, yTuck)
+      .line(x5, wingTop)
+      .line(wingR - wingCh, wingTop)
+      .line(wingR, wingTop + wingCh)
+      .line(wingR, wingBottom - wingCh)
+      .line(wingR - wingCh, wingBottom)
+      .line(x5, wingBottom)
+      .line(x5, yLid)
+      .line(flapR, yLid);
+  } else {
+    o.move(flapL, yTop).line(flapR, yTop);
+  }
+
+  o.line(flapR, y1).line(x8, y1);
+  for (const cy of lockY) {
+    o.line(x8, cy - lockW / 2)
+      .line(x9, cy - lockW / 2 + tabCh)
+      .line(x9, cy + lockW / 2 - tabCh)
+      .line(x8, cy + lockW / 2);
+  }
+  o.line(x8, y2).line(flapR, y2).line(flapR, y3).line(flapL, y3).line(flapL, y2).line(x1, y2);
+  for (const cy of [...lockY].reverse()) {
+    o.line(x1, cy + lockW / 2)
+      .line(x0, cy + lockW / 2 - tabCh)
+      .line(x0, cy - lockW / 2 + tabCh)
+      .line(x1, cy - lockW / 2);
+  }
+  o.line(x1, y1).line(flapL, y1);
+
+  if (withLid) {
+    o.line(flapL, yLid)
+      .line(x4, yLid)
+      .line(x4, wingBottom)
+      .line(wingL + wingCh, wingBottom)
+      .line(wingL, wingBottom - wingCh)
+      .line(wingL, wingTop + wingCh)
+      .line(wingL + wingCh, wingTop)
+      .line(x4, wingTop)
+      .line(x4, yTuck)
+      .line(earL, yTuck);
+  } else {
+    o.line(flapL, yTop);
+  }
+
+  const slots = [];
+  for (const cy of lockY) {
+    slots.push(slot(x4 + slotInset + slotWidth / 2, cy, lockW, slotWidth));
+    slots.push(slot(x5 - slotInset - slotWidth / 2, cy, lockW, slotWidth));
+  }
+
+  // The end flaps and the side walls both hinge on x4 and x5, so they have to
+  // be parted along the base creases.
+  const partingCuts = [
+    segment(flapL, y1, x4, y1),
+    segment(flapL, y2, x4, y2),
+    segment(x5, y1, flapR, y1),
+    segment(x5, y2, flapR, y2),
   ];
 
   const folds = [
-    segment(x0, y1, x3, y1),
-    segment(x0, y2, x3, y2),
-    segment(x1, y1, x1, y2),
+    segment(x4, y1, x4, y2),
+    segment(x5, y1, x5, y2),
+    segment(x3, y1, x3, y2),
+    segment(x6, y1, x6, y2),
     segment(x2, y1, x2, y2),
+    segment(x7, y1, x7, y2),
+    segment(x4, y1, x5, y1),
+    segment(x4, y2, x5, y2),
+    segment(x4, yLid, x4, y3),
+    segment(x5, yLid, x5, y3),
   ];
-
-  return {
-    name: label,
-    outline,
-    cuts: [polygon(outline)],
-    folds,
-    labels: [{ x: x1 + L / 2, y: y1 + W / 2, text: label }],
-    ...boundsOf(outline),
-  };
-}
-
-/**
- * Hinged-lid mailer in the spirit of FEFCO 0427. The lid hinges off the back
- * wall; its tuck flap drops inside the front wall and two lock tabs snap into
- * slots cut across the front wall crease.
- *
- * The lid panel runs one board deeper than the cavity so it reaches the top of
- * the front wall, and the tuck flap is inset at both ends so it slides past the
- * corner glue tabs instead of jamming against them.
- */
-export function mailerPiece({ L, W, H, t, tabWidth, lockWidth, lockLength, slotClearance, label }) {
-  const tab = Math.min(tabWidth, H);
-  const ch = Math.max(0, Math.min(2, tab / 3, H / 3));
-  const tuckInset = Math.min(tab + 1, L / 6);
-  const lockW = Math.max(2, Math.min(lockWidth, L / 3, L * 0.5 - 2 * tuckInset));
-  const lockCh = Math.max(0, Math.min(1.5, lockW / 4));
-  const tuckH = Math.max(1, H - t);
-  const lidDepth = W + t;
-  const wingDepth = Math.max(1, H - t);
-  const wingInset = 2 * t + 1;
-  const wingCh = Math.max(0, Math.min(2, wingDepth / 3));
-
-  const x0 = 0;
-  const x1 = H;
-  const x2 = H + L;
-  const x3 = H + L + H;
-  const wingL = x1 - wingDepth;
-  const wingR = x2 + wingDepth;
-  const tuckL = x1 + tuckInset;
-  const tuckR = x2 - tuckInset;
-
-  const y0 = 0;
-  const y1 = lockLength;
-  const y2 = y1 + tuckH;
-  const y3 = y2 + lidDepth;
-  const y4 = y3 + H;
-  const y5 = y4 + W;
-  const y6 = y5 + H;
-  const tabTop = y4 - tab;
-  const tabBottom = y5 + tab;
-  const wingTop = y2 + wingInset;
-  const wingBottom = y3 - wingInset;
-
-  const lockCentres = [x1 + L * 0.25, x1 + L * 0.75];
-
-  const outline = [[tuckL, y1]];
-  for (const c of lockCentres) {
-    outline.push(
-      [c - lockW / 2, y1],
-      [c - lockW / 2 + lockCh, y0],
-      [c + lockW / 2 - lockCh, y0],
-      [c + lockW / 2, y1],
+  if (withLid) {
+    folds.push(
+      segment(x4, yTuck, x5, yTuck),
+      segment(x4, yLid, x5, yLid),
+      segment(x4, yTop, x4, yTuck),
+      segment(x5, yTop, x5, yTuck),
+      segment(x4, wingTop, x4, wingBottom),
+      segment(x5, wingTop, x5, wingBottom),
     );
   }
-  outline.push(
-    [tuckR, y1], [tuckR, y2], [x2, y2],
-    [x2, wingTop], [wingR - wingCh, wingTop], [wingR, wingTop + wingCh],
-    [wingR, wingBottom - wingCh], [wingR - wingCh, wingBottom], [x2, wingBottom],
-    [x2, tabTop], [x3 - ch, tabTop], [x3, tabTop + ch],
-    [x3, tabBottom - ch], [x3 - ch, tabBottom], [x2, tabBottom],
-    [x2, y6], [x1, y6],
-    [x1, tabBottom], [x0 + ch, tabBottom], [x0, tabBottom - ch],
-    [x0, tabTop + ch], [x0 + ch, tabTop], [x1, tabTop],
-    [x1, wingBottom], [wingL + wingCh, wingBottom], [wingL, wingBottom - wingCh],
-    [wingL, wingTop + wingCh], [wingL + wingCh, wingTop], [x1, wingTop],
-    [x1, y2], [tuckL, y2],
-  );
-
-  const slotLength = lockW + slotClearance;
-  const slotWidth = t + slotClearance;
-  const slots = lockCentres.map((c) => slot(c, y5, slotLength, slotWidth));
-  const slotGaps = lockCentres.map((c) => [c - slotLength / 2 - 1, c + slotLength / 2 + 1]);
-
-  const folds = [
-    segment(tuckL, y2, tuckR, y2),
-    segment(x1, y3, x2, y3),
-    segment(x0, y4, x3, y4),
-    ...foldWithGaps(y5, x0, x3, slotGaps),
-    segment(x1, y4, x1, y5),
-    segment(x2, y4, x2, y5),
-    segment(x1, wingTop, x1, wingBottom),
-    segment(x2, wingTop, x2, wingBottom),
-  ];
 
   return {
     name: label,
-    outline,
-    cuts: [polygon(outline), ...slots],
+    outline: o.points,
+    cuts: [o.path(), ...slots, ...partingCuts],
     folds,
-    labels: [{ x: x1 + L / 2, y: y4 + W / 2, text: label }],
-    ...boundsOf(outline),
+    labels: [{ x: x4 + L / 2, y: y1 + W / 2, text: label }],
+    metrics: {
+      roll,
+      ret,
+      lockLength,
+      lockWidth: lockW,
+      flap,
+      wing,
+      slotInset,
+      slotWidth,
+      lockY,
+      x: { x0, x1, x2, x3, x4, x5, x6, x7, x8, x9 },
+      y: { yTop, yTuck, yLid, y1, y2, y3 },
+    },
+    ...boundsOf(o.points),
   };
 }
 
@@ -242,12 +288,10 @@ export function buildBox({
   width,
   height,
   thickness,
-  tabWidth = 15,
+  lockWidth = 40,
+  slotClearance = 0.4,
   lidDepth = 25,
   lidClearance = 0.4,
-  lockWidth = 25,
-  lockLength,
-  slotClearance = 0.4,
 } = {}) {
   const t = thickness;
   const typed = { L: length, W: width, H: height, t, lidClearance };
@@ -270,36 +314,32 @@ export function buildBox({
   if (!(t > 0)) errors.push('Material thickness must be greater than zero.');
   if (errors.length) return { errors, warnings, pieces: [], sheet: { width: 0, height: 0 } };
 
-  if (tabWidth > inner.H) {
-    warnings.push(`Glue tabs trimmed to ${r(inner.H)} mm so they fit beside the walls on the blank.`);
+  if (inner.H <= 2 * t) {
+    warnings.push('The walls are barely thicker than the board, so the roll ends will not close cleanly.');
+  }
+  if (2 * inner.H > inner.W - 2) {
+    warnings.push('Walls are tall relative to the width, so the front and back end flaps were trimmed to avoid meeting.');
+  }
+  if (lockWidth > inner.W * 0.4) {
+    warnings.push(`Lock tabs trimmed to ${r(inner.W * 0.4)} mm so the two tabs on each side stay clear of each other.`);
   }
 
+  const shared = { t, lockWidth, slotClearance };
   const pieces = [];
   if (variant === 'mailer') {
-    if (tabWidth + 1 > inner.L / 6) {
-      warnings.push('Glue tabs are wide for this length, so the lid tuck flap was narrowed to clear them.');
-    }
     pieces.push(
-      mailerPiece({
-        ...inner,
-        t,
-        tabWidth,
-        lockWidth,
-        lockLength: lockLength ?? t + 3,
-        slotClearance,
-        label: 'Mailer',
-      }),
+      rollEndPiece({ ...inner, ...shared, withLid: true, lidDepth: inner.W + t, label: 'Mailer' }),
     );
   } else if (variant === 'sliplid') {
     const outerBase = outerFromInner('tray', { ...inner, t, lidClearance });
-    pieces.push(trayPiece({ ...inner, t, tabWidth, label: 'Base' }));
+    pieces.push(rollEndPiece({ ...inner, ...shared, withLid: false, label: 'Base' }));
     pieces.push(
-      trayPiece({
+      rollEndPiece({
         L: outerBase.L + 2 * lidClearance,
         W: outerBase.W + 2 * lidClearance,
         H: lidDepth,
-        t,
-        tabWidth,
+        ...shared,
+        withLid: false,
         label: 'Lid',
       }),
     );
@@ -307,7 +347,7 @@ export function buildBox({
       warnings.push('The lid is as deep as the base, so it will bottom out before it reaches the base rim.');
     }
   } else {
-    pieces.push(trayPiece({ ...inner, t, tabWidth, label: 'Tray' }));
+    pieces.push(rollEndPiece({ ...inner, ...shared, withLid: false, label: 'Tray' }));
   }
 
   let cursorX = MARGIN;
@@ -339,8 +379,7 @@ export function buildBox({
 /** Serialise a built box as a laser-ready SVG: one layer for cuts, one for folds. */
 export function toSVG(box, { cutColor = '#000000', foldColor = '#0000ff', strokeWidth = 0.1, showLabels = false } = {}) {
   const { sheet, pieces } = box;
-  const group = (piece, key) =>
-    piece[key].map((path) => `<path d="${path.d}"/>`).join('');
+  const group = (piece, key) => piece[key].map((path) => `<path d="${path.d}"/>`).join('');
 
   const cuts = pieces
     .map((p) => `<g transform="translate(${r(p.x)} ${r(p.y)})">${group(p, 'cuts')}</g>`)

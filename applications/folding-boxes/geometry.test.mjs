@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 
 import { buildBox, innerFromOuter, outerFromInner, toSVG, toMM, fromMM } from './geometry.js';
 
-const base = { length: 150, width: 100, height: 50, thickness: 3 };
+const base = { length: 500, width: 300, height: 80, thickness: 3 };
 const close = (actual, expected, message) =>
   assert.ok(Math.abs(actual - expected) < 1e-6, `${message}: ${actual} != ${expected}`);
 
@@ -14,6 +14,12 @@ const outlineFits = (piece) => {
   }
 };
 
+/** Slot paths open "M<x> <y1>L<x> <y2>", so the pair gives the slot's span. */
+const slotSpan = (path) => {
+  const [, y1, y2] = path.d.match(/^M[\d.-]+ ([\d.-]+)L[\d.-]+ ([\d.-]+)/).map(Number);
+  return { centre: (y1 + y2) / 2, x: Number(path.d.match(/^M([\d.-]+)/)[1]) };
+};
+
 test('unit conversion round-trips', () => {
   close(fromMM(toMM(2.5, 'in'), 'in'), 2.5, 'inches');
   close(toMM(1, 'in'), 25.4, 'one inch');
@@ -22,7 +28,7 @@ test('unit conversion round-trips', () => {
 
 for (const variant of ['tray', 'mailer', 'sliplid']) {
   test(`${variant}: inner and outer dimensions are inverses`, () => {
-    const dims = { L: 150, W: 100, H: 50, t: 3, lidClearance: 0.4 };
+    const dims = { L: 500, W: 300, H: 80, t: 3, lidClearance: 0.4 };
     const outer = outerFromInner(variant, dims);
     const back = innerFromOuter(variant, { ...outer, t: dims.t, lidClearance: dims.lidClearance });
     close(back.L, dims.L, 'L');
@@ -51,68 +57,131 @@ for (const variant of ['tray', 'mailer', 'sliplid']) {
       assert.ok(piece.y + piece.height <= box.sheet.height + 1e-9, 'piece overflows sheet height');
     }
   });
+
+  test(`${variant}: each end carries a side wall, a roll and a return`, () => {
+    const box = buildBox({ ...base, variant });
+    for (const piece of box.pieces) {
+      const { x, roll, ret } = piece.metrics;
+      close(x.x4 - x.x3, x.x6 - x.x5, 'side walls match');
+      close(x.x3 - x.x2, roll, 'left roll panel');
+      close(x.x7 - x.x6, roll, 'right roll panel');
+      close(x.x2 - x.x1, ret, 'left return panel');
+      close(x.x8 - x.x7, ret, 'right return panel');
+    }
+  });
+
+  test(`${variant}: the return reaches the base so its tabs can lock`, () => {
+    const box = buildBox({ ...base, variant });
+    for (const piece of box.pieces) {
+      const { ret, lockLength, x } = piece.metrics;
+      const wallHeight = x.x4 - x.x3;
+      assert.ok(ret + lockLength >= wallHeight, `return ${ret}+${lockLength} cannot reach ${wallHeight}`);
+    }
+  });
+
+  test(`${variant}: lock tabs register with the slots cut in the base`, () => {
+    const box = buildBox({ ...base, variant });
+    for (const piece of box.pieces) {
+      const { x, lockY, slotInset, slotWidth } = piece.metrics;
+
+      // Tab tips are the only outline points out at x9 and x0.
+      const tipY = piece.outline.filter(([px]) => Math.abs(px - x.x9) < 1e-9).map(([, py]) => py);
+      assert.equal(tipY.length, 4, 'two tabs on the right return');
+      const tabCentres = [(tipY[0] + tipY[1]) / 2, (tipY[2] + tipY[3]) / 2].sort((a, b) => a - b);
+
+      // Path coordinates are rounded to a micron on the way out, so compare
+      // against the raw positions with that much slack.
+      const slots = piece.cuts.slice(1, 5).map(slotSpan);
+      const slotCentres = [...new Set(slots.map((s) => s.centre))].sort((a, b) => a - b);
+      const wanted = [...lockY].sort((a, b) => a - b);
+      assert.equal(slotCentres.length, 2, 'two slot positions per piece');
+      slotCentres.forEach((centre, i) => {
+        assert.ok(Math.abs(centre - tabCentres[i]) < 1e-3, `tab ${tabCentres[i]} misses slot ${centre}`);
+        assert.ok(Math.abs(centre - wanted[i]) < 1e-3, `slot ${centre} is off lock position ${wanted[i]}`);
+      });
+
+      // Each slot sits one board in from its base crease, inside the base panel.
+      for (const s of slots) {
+        const fromLeft = s.x - x.x4;
+        const fromRight = x.x5 - (s.x + slotWidth);
+        assert.ok(
+          Math.abs(fromLeft - slotInset) < 1e-3 || Math.abs(fromRight - slotInset) < 1e-3,
+          `slot at ${s.x} is not inset ${slotInset} from a base crease`,
+        );
+      }
+    }
+  });
 }
 
-test('tray outer size adds one wall per side and one bottom', () => {
-  const box = buildBox({ ...base, variant: 'tray' });
-  close(box.dims.outer.L, 156, 'outer L');
-  close(box.dims.outer.W, 106, 'outer W');
-  close(box.dims.outer.H, 53, 'outer H');
-});
-
-test('tray blank spans length plus two wall heights', () => {
+test('tray blank spans the base plus two roll-end arms', () => {
+  const { length: L, width: W, height: H, thickness: t } = base;
   const [tray] = buildBox({ ...base, variant: 'tray' }).pieces;
-  close(tray.width, 150 + 2 * 50, 'blank width');
-  close(tray.height, 100 + 2 * 50, 'blank height');
+  // arm = side wall H + roll 2t + return (H - t) + lock tab 2t
+  close(tray.width, L + 2 * (2 * H + 3 * t), 'blank width');
+  close(tray.height, W + 2 * H, 'blank height');
 });
 
-test('mailer blank stacks tuck, lid, back, bottom and front', () => {
+test('the tray is the mailer blank without its lid rows', () => {
+  const { width: W, height: H } = base;
+  const [tray] = buildBox({ ...base, variant: 'tray' }).pieces;
   const [mailer] = buildBox({ ...base, variant: 'mailer' }).pieces;
-  const lockLength = base.thickness + 3;
-  const tuck = base.height - base.thickness;
-  const lid = base.width + base.thickness;
-  close(mailer.width, 150 + 2 * 50, 'blank width');
-  close(mailer.height, lockLength + tuck + lid + 50 + 100 + 50, 'blank height');
+  close(mailer.width, tray.width, 'same blank width');
+  // The extra rows are the tuck flap (H - t) and the lid panel (W + t).
+  close(mailer.height - tray.height, H + W, 'lid rows');
+  assert.deepEqual(mailer.metrics.x, tray.metrics.x, 'identical column layout');
 });
 
-test('mailer lid is one board deeper than the cavity so it meets the front wall', () => {
+test('mailer adds a tuck flap, a lid and wings above the back wall', () => {
+  const { width: W, height: H, thickness: t } = base;
   const [mailer] = buildBox({ ...base, variant: 'mailer' }).pieces;
-  const yOf = (fold) => Number(fold.d.match(/^M[\d.-]+ ([\d.-]+)/)[1]);
-  const [tuckHinge, lidHinge] = mailer.folds;
-  close(yOf(lidHinge) - yOf(tuckHinge), base.width + base.thickness, 'lid panel depth');
+  const { y } = mailer.metrics;
+  close(y.yTuck, H - t, 'tuck flap height');
+  close(y.yLid - y.yTuck, W + t, 'lid panel reaches the front wall');
+  close(y.y1 - y.yLid, H, 'back wall');
+  close(y.y2 - y.y1, W, 'base');
+  close(y.y3 - y.y2, H, 'front wall');
 });
 
-test('mailer tuck flap clears the corner glue tabs at both ends', () => {
-  const tabWidth = 15;
-  const [mailer] = buildBox({ ...base, variant: 'mailer', tabWidth }).pieces;
-  const lockLength = base.thickness + 3;
-  const flap = mailer.outline.filter(([, y]) => Math.abs(y - lockLength) < 1e-9);
-  const left = Math.min(...flap.map(([x]) => x));
-  const right = Math.max(...flap.map(([x]) => x));
-  // Panel edges sit at x = H and x = H + L; the flap must start inside both.
-  assert.ok(left >= 50 + tabWidth, `flap left edge ${left} does not clear the glue tab`);
-  assert.ok(right <= 50 + 150 - tabWidth, `flap right edge ${right} does not clear the glue tab`);
+test('tray has no lid rows at all', () => {
+  const [tray] = buildBox({ ...base, variant: 'tray' }).pieces;
+  const { y } = tray.metrics;
+  close(y.yTuck, 0, 'no tuck flap');
+  close(y.yLid, 0, 'no lid panel');
 });
 
-test('mailer cuts the two lock slots that the tuck flap tabs drop into', () => {
-  const [mailer] = buildBox({ ...base, variant: 'mailer' }).pieces;
-  assert.equal(mailer.cuts.length, 3, 'outline plus two slots');
+test('every piece cuts four lock slots and parts the end flaps from the side walls', () => {
+  for (const variant of ['tray', 'mailer', 'sliplid']) {
+    for (const piece of buildBox({ ...base, variant }).pieces) {
+      assert.equal(piece.cuts.length, 9, `${variant}: outline + 4 slots + 4 parting cuts`);
+    }
+  }
+});
+
+test('end flaps are trimmed so the front and back pair cannot collide', () => {
+  const box = buildBox({ ...base, width: 100, variant: 'tray' });
+  const [tray] = box.pieces;
+  assert.ok(2 * tray.metrics.flap <= 100, 'end flaps overlap inside the box');
+  assert.ok(box.warnings.some((w) => w.includes('end flaps were trimmed')), box.warnings.join('|'));
+});
+
+test('lock tabs are trimmed so the two on a side stay clear of each other', () => {
+  const box = buildBox({ ...base, lockWidth: 500, variant: 'tray' });
+  assert.ok(box.pieces[0].metrics.lockWidth <= base.width * 0.4);
+  assert.ok(box.warnings.some((w) => w.includes('Lock tabs trimmed')), box.warnings.join('|'));
 });
 
 test('slip lid is a base plus a lid sized to clear the base outside', () => {
   const clearance = 0.4;
-  const box = buildBox({ ...base, variant: 'sliplid', lidClearance: clearance, lidDepth: 20 });
+  const box = buildBox({ ...base, variant: 'sliplid', lidClearance: clearance, lidDepth: 30 });
   const [baseTray, lid] = box.pieces;
   assert.equal(baseTray.name, 'Base');
   assert.equal(lid.name, 'Lid');
-
-  // Lid blank width = lid inner length + two lid wall heights.
-  const lidInnerL = lid.width - 2 * 20;
-  close(lidInnerL, 150 + 2 * base.thickness + 2 * clearance, 'lid inner length clears the base outside');
+  const lidInnerL = lid.metrics.x.x5 - lid.metrics.x.x4;
+  close(lidInnerL, base.length + 2 * base.thickness + 2 * clearance, 'lid clears the base outside');
 });
 
 test('slip lid warns when the lid is too deep to seat', () => {
-  const box = buildBox({ ...base, variant: 'sliplid', lidDepth: 60 });
+  const box = buildBox({ ...base, variant: 'sliplid', lidDepth: 90 });
   assert.ok(box.warnings.some((w) => w.includes('bottom out')), box.warnings.join('|'));
 });
 
@@ -122,17 +191,11 @@ test('impossible outer dimensions are reported rather than drawn', () => {
   assert.equal(box.pieces.length, 0);
 });
 
-test('glue tabs never grow past the wall height', () => {
-  const box = buildBox({ ...base, height: 10, tabWidth: 40, variant: 'tray' });
-  assert.ok(box.warnings.some((w) => w.includes('Glue tabs trimmed')), box.warnings.join('|'));
-  box.pieces.forEach(outlineFits);
-});
-
 test('SVG carries millimetre page size and separate cut and fold layers', () => {
   const box = buildBox({ ...base, variant: 'mailer' });
   const svg = toSVG(box);
-  assert.match(svg, /width="260mm"/);
-  assert.match(svg, /viewBox="0 0 260 366"/);
+  assert.match(svg, /width="848mm"/);
+  assert.match(svg, /viewBox="0 0 848 850"/);
   assert.match(svg, /<g id="cut"/);
   assert.match(svg, /<g id="fold"/);
   assert.ok(!svg.includes('NaN'), 'no NaN coordinates');
