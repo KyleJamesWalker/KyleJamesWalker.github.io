@@ -31,10 +31,16 @@ const ASSEMBLY = {
 
 const round = (n, unit) => Number(n.toFixed(unit === 'mm' ? 2 : 3));
 
-function NumberField({ label, value, onChange, unit, step, min = 0 }) {
+function NumberField({ label, value, onChange, unit, step, min = 0, compact = false }) {
   return (
     <label className="block">
-      <span className="flex items-baseline justify-between text-sm font-medium text-neutral-300">
+      {/* Side by side, a pushed-right unit sits nearer the next field's label
+          than its own, so narrow fields keep theirs alongside the label. */}
+      <span
+        className={`flex items-baseline text-sm font-medium text-neutral-300 ${
+          compact ? 'gap-1.5' : 'justify-between'
+        }`}
+      >
         {label}
         {unit && <span className="text-xs text-neutral-500">{unit}</span>}
       </span>
@@ -217,9 +223,9 @@ export default function App() {
                   : 'Sized to fit the finished box into a space.'}
               </p>
               <div className="mt-3 grid grid-cols-3 gap-2">
-                <NumberField label="Length" value={values.length} onChange={set('length')} step={step} />
-                <NumberField label="Width" value={values.width} onChange={set('width')} step={step} />
-                <NumberField label="Height" value={values.height} onChange={set('height')} step={step} />
+                <NumberField label="Length" value={values.length} onChange={set('length')} unit={unit} step={step} compact />
+                <NumberField label="Width" value={values.width} onChange={set('width')} unit={unit} step={step} compact />
+                <NumberField label="Height" value={values.height} onChange={set('height')} unit={unit} step={step} compact />
               </div>
               <div className="mt-3">
                 <NumberField
