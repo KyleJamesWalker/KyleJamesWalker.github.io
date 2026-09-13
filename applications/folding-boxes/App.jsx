@@ -4,31 +4,29 @@ import { AlertTriangle, Box, ChevronDown, ChevronRight, Download, Ruler } from '
 import { VARIANTS, buildBox, fromMM, toMM, toSVG } from './geometry.js';
 
 const DEFAULTS_MM = {
-  length: 150,
-  width: 100,
-  height: 50,
+  length: 200,
+  width: 140,
+  height: 60,
   thickness: 3,
-  tabWidth: 15,
-  lidDepth: 25,
-  lidClearance: 0.4,
-  lockWidth: 25,
+  lockWidth: 40,
   slotClearance: 0.4,
+  lidDepth: 30,
+  lidClearance: 0.4,
 };
 
+const ROLL_END = [
+  'Score every dashed line. Fold the end flaps on the front and back walls inwards.',
+  'Fold each side wall up, roll it over those end flaps, and bring the return panel back down inside.',
+  'Push the two tabs on each return through the slots in the base. The ends are now three boards thick and the box holds itself shut. No glue.',
+];
+
 const ASSEMBLY = {
-  tray: [
-    'Score every dashed line, then fold all four walls up.',
-    'Fold the four corner tabs inwards and glue or tape them to the inside of the long walls.',
-  ],
+  tray: ROLL_END,
   mailer: [
-    'Score every dashed line. Fold the end walls up and glue their corner tabs inside the front and back walls.',
-    'Fold the lid over, fold its two wings down inside the end walls, then drop the tuck flap inside the front wall.',
-    'Push the two lock tabs into the slots along the front crease to close the box.',
+    ...ROLL_END,
+    'Fold the lid over, drop its wings down inside the side walls, then fold the ears in and tuck the front flap down inside the front wall.',
   ],
-  sliplid: [
-    'Build the base and the lid the same way: walls up, corner tabs glued inside.',
-    'The lid is cut to the base outside plus the slip clearance, so it slides over the finished base.',
-  ],
+  sliplid: [...ROLL_END, 'Build the lid the same way. It is cut to the base outside plus the slip clearance, so it slides over the finished base.'],
 };
 
 const round = (n, unit) => Number(n.toFixed(unit === 'mm' ? 2 : 3));
@@ -245,7 +243,14 @@ export default function App() {
               </button>
               {showAdvanced && (
                 <div className="mt-3 space-y-3">
-                  <NumberField label="Glue tab width" value={values.tabWidth} onChange={set('tabWidth')} unit={unit} step={step} />
+                  <NumberField label="Lock tab width" value={values.lockWidth} onChange={set('lockWidth')} unit={unit} step={step} />
+                  <NumberField
+                    label="Slot clearance"
+                    value={values.slotClearance}
+                    onChange={set('slotClearance')}
+                    unit={unit}
+                    step={step}
+                  />
                   {variant === 'sliplid' && (
                     <>
                       <NumberField label="Lid depth" value={values.lidDepth} onChange={set('lidDepth')} unit={unit} step={step} />
@@ -253,18 +258,6 @@ export default function App() {
                         label="Slip clearance"
                         value={values.lidClearance}
                         onChange={set('lidClearance')}
-                        unit={unit}
-                        step={step}
-                      />
-                    </>
-                  )}
-                  {variant === 'mailer' && (
-                    <>
-                      <NumberField label="Lock tab width" value={values.lockWidth} onChange={set('lockWidth')} unit={unit} step={step} />
-                      <NumberField
-                        label="Slot clearance"
-                        value={values.slotClearance}
-                        onChange={set('slotClearance')}
                         unit={unit}
                         step={step}
                       />
