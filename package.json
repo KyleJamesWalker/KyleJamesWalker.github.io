@@ -5,7 +5,8 @@
   "scripts": {
     "build": "vite build",
     "preview": "vite preview",
-    "build:zine": "node scripts/minify-zine.mjs"
+    "build:zine": "node scripts/minify-zine.mjs",
+    "test": "node --test applications/folding-boxes/geometry.test.mjs"
   },
   "dependencies": {
     "clsx": "^2.1.1",

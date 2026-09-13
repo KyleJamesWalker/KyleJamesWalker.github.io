@@ -34,6 +34,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         'cardboard-slicer': 'applications/cardboard-slicer/main.jsx',
+        'folding-boxes': 'applications/folding-boxes/main.jsx',
         'lead-scanner': 'applications/lead-scanner/main.jsx',
         'voronoi-shapes': 'applications/voronoi-shapes/main.jsx',
       },
