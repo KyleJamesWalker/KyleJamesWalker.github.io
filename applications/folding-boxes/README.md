@@ -81,6 +81,10 @@ The short cut lines that cross the base creases at each corner are deliberate.
 The end flaps and the side walls both hinge on that line and have to be parted
 or neither can fold.
 
+Every flap that folds inwards — the end flaps and the lid wings — is tapered at
+its free corners so those corners clear the panels they land against instead of
+catching on them.
+
 ## Development
 
 The blank geometry lives in `geometry.js` with no React or DOM dependency, which

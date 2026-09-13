@@ -17,7 +17,7 @@ export const toMM = (value, unit) => (unit === 'in' ? value * MM_PER_INCH : valu
 export const fromMM = (value, unit) => (unit === 'in' ? value / MM_PER_INCH : value);
 
 export const VARIANTS = [
-  { id: 'tray', name: 'Open tray', blurb: 'Roll-end tray, no lid. Locks into the base, no glue.' },
+  { id: 'tray', name: 'Open tray', blurb: 'Roll-end tray, no lid. The ends lock into the base.' },
   { id: 'mailer', name: 'Locking flap lid', blurb: 'The same tray plus a hinged lid whose eared flap tucks inside the front wall.' },
   { id: 'sliplid', name: 'Slip-on lid', blurb: 'Two roll-end trays: a base and a shallow lid that slides over it.' },
 ];
@@ -100,7 +100,6 @@ export function rollEndPiece({ L, W, H, t, lockWidth, slotClearance, withLid, li
   const wingTail = t + 1;
   const earRadius = Math.max(0, Math.min(wing * 0.9, tuckHeight * 0.9));
   const tabCh = Math.max(0, Math.min(1.5, lockLength / 2, lockW / 6));
-  const wingCh = Math.max(0, Math.min(2, wing / 3));
 
   const x0 = 0;
   const x1 = lockLength;
@@ -129,6 +128,12 @@ export function rollEndPiece({ L, W, H, t, lockWidth, slotClearance, withLid, li
   const wingTop = yTuck + wingLead;
   const wingBottom = yLid - wingTail;
 
+  // Fold-in flaps taper at their free corners so those corners clear the panels
+  // they land against instead of catching on them.
+  const wingSpan = wingBottom - wingTop;
+  const wingTaper = Math.max(0, Math.min(wing * 0.25, wingSpan * 0.1, wing - 1, wingSpan / 2 - 1));
+  const flapTaper = Math.max(0, Math.min(flap * 0.25, H * 0.2, flap - 1, H / 2 - 1));
+
   const lockY = [y1 + W * 0.28, y1 + W * 0.72];
 
   // The return panel lands one board inside the side wall, so the slots that
@@ -146,46 +151,57 @@ export function rollEndPiece({ L, W, H, t, lockWidth, slotClearance, withLid, li
       .line(earR, yTuck)
       .line(x5, yTuck)
       .line(x5, wingTop)
-      .line(wingR - wingCh, wingTop)
-      .line(wingR, wingTop + wingCh)
-      .line(wingR, wingBottom - wingCh)
-      .line(wingR - wingCh, wingBottom)
+      .line(wingR - wingTaper, wingTop)
+      .line(wingR, wingTop + wingTaper)
+      .line(wingR, wingBottom - wingTaper)
+      .line(wingR - wingTaper, wingBottom)
       .line(x5, wingBottom)
       .line(x5, yLid)
-      .line(flapR, yLid);
+      .line(flapR - flapTaper, yLid)
+      .line(flapR, yLid + flapTaper);
   } else {
-    o.move(flapL, yTop).line(flapR, yTop);
+    o.move(flapL + flapTaper, yTop).line(flapR - flapTaper, yTop).line(flapR, yTop + flapTaper);
   }
 
-  o.line(flapR, y1).line(x8, y1);
+  o.line(flapR, y1 - flapTaper).line(flapR - flapTaper, y1).line(x8, y1);
   for (const cy of lockY) {
     o.line(x8, cy - lockW / 2)
       .line(x9, cy - lockW / 2 + tabCh)
       .line(x9, cy + lockW / 2 - tabCh)
       .line(x8, cy + lockW / 2);
   }
-  o.line(x8, y2).line(flapR, y2).line(flapR, y3).line(flapL, y3).line(flapL, y2).line(x1, y2);
+  o.line(x8, y2)
+    .line(flapR - flapTaper, y2)
+    .line(flapR, y2 + flapTaper)
+    .line(flapR, y3 - flapTaper)
+    .line(flapR - flapTaper, y3)
+    .line(flapL + flapTaper, y3)
+    .line(flapL, y3 - flapTaper)
+    .line(flapL, y2 + flapTaper)
+    .line(flapL + flapTaper, y2)
+    .line(x1, y2);
   for (const cy of [...lockY].reverse()) {
     o.line(x1, cy + lockW / 2)
       .line(x0, cy + lockW / 2 - tabCh)
       .line(x0, cy - lockW / 2 + tabCh)
       .line(x1, cy - lockW / 2);
   }
-  o.line(x1, y1).line(flapL, y1);
+  o.line(x1, y1).line(flapL + flapTaper, y1).line(flapL, y1 - flapTaper);
 
   if (withLid) {
-    o.line(flapL, yLid)
+    o.line(flapL, yLid + flapTaper)
+      .line(flapL + flapTaper, yLid)
       .line(x4, yLid)
       .line(x4, wingBottom)
-      .line(wingL + wingCh, wingBottom)
-      .line(wingL, wingBottom - wingCh)
-      .line(wingL, wingTop + wingCh)
-      .line(wingL + wingCh, wingTop)
+      .line(wingL + wingTaper, wingBottom)
+      .line(wingL, wingBottom - wingTaper)
+      .line(wingL, wingTop + wingTaper)
+      .line(wingL + wingTaper, wingTop)
       .line(x4, wingTop)
       .line(x4, yTuck)
       .line(earL, yTuck);
   } else {
-    o.line(flapL, yTop);
+    o.line(flapL, yTop + flapTaper).line(flapL + flapTaper, yTop);
   }
 
   const slots = [];
@@ -197,10 +213,10 @@ export function rollEndPiece({ L, W, H, t, lockWidth, slotClearance, withLid, li
   // The end flaps and the side walls both hinge on x4 and x5, so they have to
   // be parted along the base creases.
   const partingCuts = [
-    segment(flapL, y1, x4, y1),
-    segment(flapL, y2, x4, y2),
-    segment(x5, y1, flapR, y1),
-    segment(x5, y2, flapR, y2),
+    segment(flapL + flapTaper, y1, x4, y1),
+    segment(flapL + flapTaper, y2, x4, y2),
+    segment(x5, y1, flapR - flapTaper, y1),
+    segment(x5, y2, flapR - flapTaper, y2),
   ];
 
   const folds = [
@@ -241,6 +257,8 @@ export function rollEndPiece({ L, W, H, t, lockWidth, slotClearance, withLid, li
       wing,
       slotInset,
       slotWidth,
+      wingTaper,
+      flapTaper,
       lockY,
       x: { x0, x1, x2, x3, x4, x5, x6, x7, x8, x9 },
       y: { yTop, yTuck, yLid, y1, y2, y3 },

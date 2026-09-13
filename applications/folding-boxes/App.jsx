@@ -17,7 +17,7 @@ const DEFAULTS_MM = {
 const ROLL_END = [
   'Score every dashed line. Fold the end flaps on the front and back walls inwards.',
   'Fold each side wall up, roll it over those end flaps, and bring the return panel back down inside.',
-  'Push the two tabs on each return through the slots in the base. The ends are now three boards thick and the box holds itself shut. No glue.',
+  'Push the two tabs on each return through the slots in the base. The ends finish three boards thick and hold themselves together.',
 ];
 
 const ASSEMBLY = {

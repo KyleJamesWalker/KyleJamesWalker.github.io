@@ -113,6 +113,45 @@ for (const variant of ['tray', 'mailer', 'sliplid']) {
   });
 }
 
+test('every fold-in flap is tapered rather than left square', () => {
+  const has = (piece, x, y) =>
+    piece.outline.some(([px, py]) => Math.abs(px - x) < 1e-6 && Math.abs(py - y) < 1e-6);
+
+  for (const variant of ['tray', 'mailer', 'sliplid']) {
+    for (const piece of buildBox({ ...base, variant }).pieces) {
+      const { x, y, flap, flapTaper, wing, wingTaper } = piece.metrics;
+      assert.ok(flapTaper > 0 && flapTaper < flap, `${variant}: end flap taper ${flapTaper}`);
+
+      // Back and front end flaps, outer corners on both ends of the blank.
+      for (const [edge, sign] of [[x.x4 - flap, 1], [x.x5 + flap, -1]]) {
+        for (const corner of [y.yLid, y.y1, y.y2, y.y3]) {
+          const inward = corner === y.yLid || corner === y.y2 ? 1 : -1;
+          assert.ok(!has(piece, edge, corner), `${variant}: square corner at ${edge},${corner}`);
+          assert.ok(has(piece, edge + sign * flapTaper, corner), `${variant}: missing taper run at ${corner}`);
+          assert.ok(has(piece, edge, corner + inward * flapTaper), `${variant}: missing taper rise at ${corner}`);
+        }
+      }
+
+      if (variant !== 'mailer') continue;
+      assert.ok(wingTaper > 0 && wingTaper < wing, `wing taper ${wingTaper}`);
+
+      // A tapered wing meets its outer edge at two points, each set back from
+      // the fold edge by the taper. A square wing would meet it at the corners.
+      // The tuck flap ears reach the same depth, so look below the tuck crease.
+      const wingR = x.x5 + wing;
+      const below = piece.outline.filter(([, py]) => py > y.yTuck);
+      const outerY = below.filter(([px]) => Math.abs(px - wingR) < 1e-6).map(([, py]) => py);
+      const runInY = below.filter(([px]) => Math.abs(px - (wingR - wingTaper)) < 1e-6).map(([, py]) => py);
+      assert.equal(outerY.length, 2, 'right wing outer edge should have two tapered ends');
+      assert.equal(runInY.length, 2, 'right wing taper should run in from the fold edge');
+      outerY.sort((a, b) => a - b);
+      runInY.sort((a, b) => a - b);
+      close(outerY[0] - runInY[0], wingTaper, 'wing taper rises by the taper amount');
+      close(runInY[1] - outerY[1], wingTaper, 'wing taper falls by the taper amount');
+    }
+  }
+});
+
 test('tray blank spans the base plus two roll-end arms', () => {
   const { length: L, width: W, height: H, thickness: t } = base;
   const [tray] = buildBox({ ...base, variant: 'tray' }).pieces;
