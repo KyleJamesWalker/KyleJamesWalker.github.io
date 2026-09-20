@@ -30,4 +30,4 @@ add multi-photo pages, print filters, zoom and a PDF that is not flattened.
 ## Printing it
 
 Print single-sided, cut the center slit, and fold. The page order in the PDF
-is already arranged for the fold, so no rearranging is needed.
+is already arranged for the fold.

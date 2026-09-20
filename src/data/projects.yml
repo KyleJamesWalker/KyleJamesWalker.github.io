@@ -5,7 +5,7 @@
     and drives the slides from your phone.
   language: Rust
   url: https://github.com/KyleJamesWalker/Palmcast
-  extraLabel: Live demo
+  extraLabel: Live site
   extraUrl: https://palmcast.vps.pocketsquirrel.com
   featured: true
   order: 1
@@ -25,7 +25,7 @@
 - id: vscode-cc-agent-manager
   name: VSCode CC Agent Manager
   blurb: >-
-    Watch and command your Claude Code agents without leaving the editor.
+    Watch your Claude Code agents without leaving VSCode.
   language: TypeScript
   url: https://github.com/KyleJamesWalker/vscode-cc-agent-manager
   extraLabel: Marketplace
@@ -48,7 +48,7 @@
 - id: amberdav
   name: AmberDAV
   blurb: >-
-    A WebDAV file server and command line utility built for Linux handhelds.
+    A WebDAV file server and command line utility built.
   language: Rust
   url: https://github.com/KyleJamesWalker/AmberDAV
   order: 5
@@ -67,8 +67,7 @@
 - id: cc-cmux-plugin
   name: cc-cmux-plugin
   blurb: >-
-    Claude Code inside cmux. Status bar, notifications, pane management and
-    agent orchestration.
+    Claude Code cmux plugin.
   language: Shell
   url: https://github.com/KyleJamesWalker/cc-cmux-plugin
   order: 7
@@ -86,7 +85,7 @@
   name: pre-commit-hooks
   blurb: >-
     Custom hooks for pre-commit, including the prose linter that enforces the
-    writing rules used across my repositories.
+    writing rules used across repositories.
   language: Python
   url: https://github.com/KyleJamesWalker/pre-commit-hooks
   order: 9
@@ -120,21 +119,3 @@
   url: https://github.com/KyleJamesWalker/renogy_rover
   order: 12
   tags: [hardware, solar]
-
-- id: telebot
-  name: telebot
-  blurb: A small framework for writing Telegram bots.
-  language: Python
-  url: https://github.com/KyleJamesWalker/telebot
-  order: 13
-  tags: [telegram, library]
-
-- id: qmk-ergodox-infinity-40-percent
-  name: qmk-ergodox-infinity-40-percent
-  blurb: >-
-    A 40 percent layout for the ErgoDox Infinity, with the original layout still
-    reachable on the first layer.
-  language: C
-  url: https://github.com/KyleJamesWalker/qmk-ergodox-infinity-40-percent
-  order: 14
-  tags: [keyboards, qmk]
