@@ -1,0 +1,140 @@
+- id: palmcast
+  name: Palmcast
+  blurb: >-
+    Present a talk when nobody brought a laptop. Runs from a single Rust binary
+    and drives the slides from your phone.
+  language: Rust
+  url: https://github.com/KyleJamesWalker/Palmcast
+  extraLabel: Live demo
+  extraUrl: https://palmcast.vps.pocketsquirrel.com
+  featured: true
+  order: 1
+  tags: [presenting, self-hosted]
+
+- id: keystones
+  name: Keystones
+  blurb: >-
+    Require review by a named expert before load-bearing code changes, by
+    pinning the gate to an AST node rather than a line number.
+  language: Python
+  url: https://github.com/KyleJamesWalker/keystones
+  featured: true
+  order: 2
+  tags: [code-review, static-analysis]
+
+- id: vscode-cc-agent-manager
+  name: VSCode CC Agent Manager
+  blurb: >-
+    Watch and command your Claude Code agents without leaving the editor.
+  language: TypeScript
+  url: https://github.com/KyleJamesWalker/vscode-cc-agent-manager
+  extraLabel: Marketplace
+  extraUrl: https://marketplace.visualstudio.com/items?itemName=KyleJamesWalker.vscode-cc-agent-manager
+  featured: true
+  order: 3
+  tags: [vscode, claude-code]
+
+- id: yamlsettings
+  name: yamlsettings
+  blurb: >-
+    Layered YAML configuration for Python, with environment overrides and
+    pluggable loaders for S3 and HTTP.
+  language: Python
+  url: https://github.com/KyleJamesWalker/yamlsettings
+  featured: true
+  order: 4
+  tags: [configuration, library]
+
+- id: amberdav
+  name: AmberDAV
+  blurb: >-
+    A WebDAV file server and command line utility built for Linux handhelds.
+  language: Rust
+  url: https://github.com/KyleJamesWalker/AmberDAV
+  order: 5
+  tags: [webdav, handheld]
+
+- id: simple-confidence-monitor
+  name: SimpleConfidenceMonitor
+  blurb: >-
+    A speaker timer and confidence monitor served from one Rust binary. Point a
+    second screen at it and start talking.
+  language: Rust
+  url: https://github.com/KyleJamesWalker/SimpleConfidenceMonitor
+  order: 6
+  tags: [presenting, self-hosted]
+
+- id: cc-cmux-plugin
+  name: cc-cmux-plugin
+  blurb: >-
+    Claude Code inside cmux. Status bar, notifications, pane management and
+    agent orchestration.
+  language: Shell
+  url: https://github.com/KyleJamesWalker/cc-cmux-plugin
+  order: 7
+  tags: [claude-code, terminal]
+
+- id: restraint-py
+  name: restraint-py
+  blurb: A small rate limiting library for Python.
+  language: Python
+  url: https://github.com/KyleJamesWalker/restraint-py
+  order: 8
+  tags: [rate-limiting, library]
+
+- id: pre-commit-hooks
+  name: pre-commit-hooks
+  blurb: >-
+    Custom hooks for pre-commit, including the prose linter that enforces the
+    writing rules used across my repositories.
+  language: Python
+  url: https://github.com/KyleJamesWalker/pre-commit-hooks
+  order: 9
+  tags: [pre-commit, linting]
+
+- id: pr-changes-matrix-builder
+  name: pr-changes-matrix-builder
+  blurb: >-
+    A GitHub Action that builds a matrix strategy from the files a pull request
+    actually touched.
+  language: Python
+  url: https://github.com/KyleJamesWalker/pr-changes-matrix-builder
+  order: 10
+  tags: [github-actions, ci]
+
+- id: yaml-params
+  name: yaml-params
+  blurb: >-
+    A GitHub Action that exports variables from YAML files, or inline YAML, into
+    the workflow environment.
+  language: Python
+  url: https://github.com/KyleJamesWalker/yaml-params
+  order: 11
+  tags: [github-actions, ci]
+
+- id: renogy-rover
+  name: renogy_rover
+  blurb: >-
+    A MODBUS driver for the Renogy Rover 20A and 40A solar charge controllers.
+  language: Python
+  url: https://github.com/KyleJamesWalker/renogy_rover
+  order: 12
+  tags: [hardware, solar]
+
+- id: telebot
+  name: telebot
+  blurb: A small framework for writing Telegram bots.
+  language: Python
+  url: https://github.com/KyleJamesWalker/telebot
+  order: 13
+  tags: [telegram, library]
+
+- id: qmk-ergodox-infinity-40-percent
+  name: qmk-ergodox-infinity-40-percent
+  blurb: >-
+    A 40 percent layout for the ErgoDox Infinity, with the original layout still
+    reachable on the first layer.
+  language: C
+  url: https://github.com/KyleJamesWalker/qmk-ergodox-infinity-40-percent
+  order: 14
+  tags: [keyboards, qmk]

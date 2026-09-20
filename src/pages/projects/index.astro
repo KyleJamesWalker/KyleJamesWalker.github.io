@@ -1,0 +1,29 @@
+---
+import { getCollection } from "astro:content";
+import Base from "../../layouts/Base.astro";
+import ProjectCard from "../../components/ProjectCard.astro";
+
+const projects = (await getCollection("projects")).sort(
+  (a, b) => a.data.order - b.data.order,
+);
+---
+
+<Base
+  title="Projects"
+  section="projects"
+  description="Open source libraries, binaries, extensions and GitHub Actions by Kyle James Walker."
+>
+  <div class="mx-auto max-w-6xl px-4 pb-6 pt-10 sm:px-6">
+    <h1 class="display text-3xl sm:text-4xl">Projects</h1>
+    <p class="mt-3 max-w-[58ch] text-sm leading-relaxed text-muted sm:text-base">
+      Libraries, binaries, editor extensions and GitHub Actions. All open
+      source, all on GitHub.
+    </p>
+  </div>
+
+  <div class="border-y border-line">
+    <div class="mx-auto grid max-w-6xl gap-px bg-line sm:grid-cols-2 lg:grid-cols-3">
+      {projects.map((project) => <ProjectCard project={project} />)}
+    </div>
+  </div>
+</Base>

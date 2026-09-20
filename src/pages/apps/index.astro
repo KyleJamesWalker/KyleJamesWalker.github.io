@@ -1,0 +1,27 @@
+---
+import { getCollection } from "astro:content";
+import Base from "../../layouts/Base.astro";
+import AppCard from "../../components/AppCard.astro";
+
+const apps = (await getCollection("apps")).sort((a, b) => a.data.order - b.data.order);
+---
+
+<Base
+  title="Apps"
+  section="apps"
+  description="Browser apps that run entirely on your machine. Nothing to install, no account, no upload."
+>
+  <div class="mx-auto max-w-6xl px-4 pb-6 pt-10 sm:px-6">
+    <h1 class="display text-3xl sm:text-4xl">Apps</h1>
+    <p class="mt-3 max-w-[58ch] text-sm leading-relaxed text-muted sm:text-base">
+      These run entirely in your browser. Nothing is installed, nothing is
+      uploaded, and there is no account. Open one and start using it.
+    </p>
+  </div>
+
+  <div class="border-y border-line">
+    <div class="mx-auto grid max-w-6xl gap-px bg-line sm:grid-cols-2 lg:grid-cols-3">
+      {apps.map((app) => <AppCard app={app} />)}
+    </div>
+  </div>
+</Base>
