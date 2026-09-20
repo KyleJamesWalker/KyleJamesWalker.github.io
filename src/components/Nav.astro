@@ -1,0 +1,46 @@
+---
+import { site, nav } from "../site";
+
+interface Props {
+  section?: "apps" | "projects" | "about";
+}
+const { section } = Astro.props;
+---
+
+<header class="border-b border-line bg-surface">
+  <nav
+    aria-label="Main"
+    class="mx-auto flex max-w-6xl items-center gap-5 px-4 py-3 sm:gap-7 sm:px-6"
+  >
+    <a href="/" class="text-sm font-extrabold tracking-tight text-ink">
+      {site.brand.pre}<span class="text-purple">{site.brand.mid}</span>{site.brand.post}
+    </a>
+
+    <ul class="flex items-center gap-4 text-sm sm:gap-6">
+      {
+        nav.map((item) => (
+          <li>
+            <a
+              href={item.href}
+              aria-current={section === item.label.toLowerCase() ? "page" : undefined}
+              class:list={[
+                "transition-colors hover:text-ink",
+                section === item.label.toLowerCase() ? "text-ink" : "text-muted",
+              ]}
+            >
+              {item.label}
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+
+    <a
+      href={site.links.github}
+      class="ml-auto text-sm text-cyan transition-colors hover:text-ink"
+      rel="me noopener"
+    >
+      GitHub <span aria-hidden="true">↗</span>
+    </a>
+  </nav>
+</header>

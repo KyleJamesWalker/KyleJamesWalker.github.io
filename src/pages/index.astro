@@ -1,0 +1,75 @@
+---
+import { getCollection } from "astro:content";
+import Base from "../layouts/Base.astro";
+import Hero from "../components/Hero.astro";
+import SectionHead from "../components/SectionHead.astro";
+import AppCard from "../components/AppCard.astro";
+import ProjectCard from "../components/ProjectCard.astro";
+import { site } from "../site";
+
+const byOrder = (a: { data: { order: number } }, b: { data: { order: number } }) =>
+  a.data.order - b.data.order;
+
+const allApps = (await getCollection("apps")).sort(byOrder);
+const allProjects = (await getCollection("projects")).sort(byOrder);
+
+const featuredApps = allApps.filter((a) => a.data.featured).slice(0, 3);
+const featuredProjects = allProjects.filter((p) => p.data.featured).slice(0, 4);
+---
+
+<Base>
+  <Hero />
+
+  <SectionHead
+    eyebrow="Run it here"
+    accent="green"
+    sub={`${allApps.length} browser apps, nothing to install`}
+    allHref="/apps/"
+    allLabel="All apps"
+  />
+  <div class="border-y border-line">
+    <div class="mx-auto grid max-w-6xl gap-px bg-line sm:grid-cols-2 lg:grid-cols-3">
+      {featuredApps.map((app) => <AppCard app={app} />)}
+    </div>
+  </div>
+
+  <SectionHead
+    eyebrow="Grab the code"
+    accent="purple"
+    sub="libraries, binaries and extensions on GitHub"
+    allHref="/projects/"
+    allLabel="All projects"
+  />
+  <div class="border-y border-line">
+    <div class="mx-auto grid max-w-6xl gap-px bg-line sm:grid-cols-2">
+      {featuredProjects.map((project) => <ProjectCard project={project} />)}
+    </div>
+  </div>
+
+  <section class="mx-auto max-w-6xl px-4 py-10 sm:px-6">
+    <div class="flex flex-col gap-5 sm:flex-row">
+      <div
+        class="h-14 w-14 shrink-0 rounded-md bg-gradient-to-br from-purple to-cyan"
+        aria-hidden="true"
+      >
+      </div>
+      <div>
+        <h2 class="text-base font-extrabold text-ink">{site.about.heading}</h2>
+        {
+          site.about.body.map((p) => (
+            <p class="mt-2 max-w-[62ch] text-sm leading-relaxed text-muted">{p}</p>
+          ))
+        }
+        <div class="mt-4 flex flex-wrap gap-5 text-sm">
+          <a href={site.links.github} rel="me noopener" class="text-cyan hover:text-ink">
+            GitHub <span aria-hidden="true">↗</span>
+          </a>
+          <a href={site.links.linkedin} rel="me noopener" class="text-cyan hover:text-ink">
+            LinkedIn <span aria-hidden="true">↗</span>
+          </a>
+          <a href="/about/" class="text-cyan hover:text-ink">More about me →</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</Base>

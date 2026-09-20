@@ -1,0 +1,61 @@
+---
+import Base from "../layouts/Base.astro";
+import { site } from "../site";
+---
+
+<Base
+  title="About"
+  section="about"
+  description="Kyle James Walker builds browser tools, Rust binaries and Python libraries, and gives them away."
+>
+  <div class="mx-auto max-w-6xl px-4 py-10 sm:px-6">
+    <h1 class="display text-3xl sm:text-4xl">About</h1>
+
+    <div class="prose-kjw mt-6">
+      <p>
+        I am Kyle James Walker. I work as a data engineer, and outside that I
+        build small tools: things that cut, fold, print or present.
+      </p>
+      <p>
+        Most of them exist because I wanted one and could not find it. The
+        laser cutter projects came from wanting boxes that fit the thing going
+        in them. The presenting tools came from turning up to talks where the
+        setup did not work. The Python libraries came from doing the same
+        awkward thing twice at work.
+      </p>
+
+      <h2>How the things here work</h2>
+      <p>
+        The <a href="/apps/">apps</a> run entirely in your browser. There is no
+        account, no upload and no server doing the work. Close the tab and
+        nothing of yours is left anywhere but your own machine.
+      </p>
+      <p>
+        The <a href="/projects/">projects</a> are on GitHub under an open source
+        license. Take them, fork them, ship them in something you sell. No
+        attribution needed, though it is nice to hear when something was
+        useful.
+      </p>
+
+      <h2>This site</h2>
+      <p>
+        Built with Astro and Tailwind, deployed to GitHub Pages. Every app in
+        it is a self-contained project: copy its directory out of the
+        repository, run <code>npm install &amp;&amp; npm run dev</code>, and it
+        works with nothing of this site attached. That is enforced in CI, not
+        just intended.
+      </p>
+      <p>
+        The photograph in the header is a stack of sugar cubes, lit from three
+        sides. I took it in 2015.
+      </p>
+
+      <h2>Elsewhere</h2>
+      <ul>
+        <li><a href={site.links.github} rel="me noopener">GitHub</a></li>
+        <li><a href={site.links.linkedin} rel="me noopener">LinkedIn</a></li>
+        <li><a href={site.links.email}>Email</a></li>
+      </ul>
+    </div>
+  </div>
+</Base>

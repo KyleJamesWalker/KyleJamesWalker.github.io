@@ -1,6 +1,6 @@
-_site/
-.sass-cache/
-.jekyll-metadata
-.bundle/
 node_modules/
-assets/dist/
+dist/
+.astro/
+apps/*/dist/
+.DS_Store
+.superpowers/

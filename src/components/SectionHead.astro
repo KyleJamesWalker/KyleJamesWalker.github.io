@@ -1,0 +1,24 @@
+---
+interface Props {
+  eyebrow: string;
+  accent: "green" | "purple";
+  sub?: string;
+  allHref?: string;
+  allLabel?: string;
+}
+const { eyebrow, accent, sub, allHref, allLabel } = Astro.props;
+---
+
+<div class="mx-auto flex max-w-6xl flex-wrap items-baseline gap-x-3 gap-y-1 px-4 pb-3 pt-10 sm:px-6">
+  <h2 class:list={["eyebrow", accent === "green" ? "text-green" : "text-purple"]}>
+    {eyebrow}
+  </h2>
+  {sub && <p class="text-sm text-muted">{sub}</p>}
+  {
+    allHref && (
+      <a href={allHref} class="ml-auto text-xs text-cyan transition-colors hover:text-ink">
+        {allLabel} <span aria-hidden="true">→</span>
+      </a>
+    )
+  }
+</div>

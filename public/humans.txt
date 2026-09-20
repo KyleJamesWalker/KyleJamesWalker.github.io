@@ -1,0 +1,9 @@
+/* TEAM */
+Developer: Kyle James Walker
+Site: https://www.kylejameswalker.com
+GitHub: https://github.com/KyleJamesWalker
+
+/* SITE */
+Standards: HTML5, CSS3
+Components: Astro, React, Tailwind CSS
+Source: https://github.com/KyleJamesWalker/KyleJamesWalker.github.io

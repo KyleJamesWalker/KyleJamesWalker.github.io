@@ -1,0 +1,51 @@
+---
+import { Image } from "astro:assets";
+import type { CollectionEntry } from "astro:content";
+
+interface Props {
+  app: CollectionEntry<"apps">;
+}
+const { app } = Astro.props;
+const { title, tagline, screenshot, screenshotAlt } = app.data;
+const detailHref = `/apps/${app.id}/`;
+const runHref = `/apps/${app.id}/run/`;
+---
+
+<article class="flex flex-col bg-surface p-4 transition-colors hover:bg-raised">
+  <a href={detailHref} class="block">
+    {
+      screenshot ? (
+        <Image
+          src={screenshot}
+          alt={screenshotAlt ?? ""}
+          widths={[320, 640, 960]}
+          sizes="(min-width: 1024px) 320px, (min-width: 640px) 45vw, 90vw"
+          loading="lazy"
+          class="mb-3 aspect-video w-full rounded-sm border border-line object-cover"
+        />
+      ) : (
+        <div class="mb-3 flex aspect-video w-full items-center justify-center rounded-sm border border-line bg-raised font-mono text-[10px] tracking-widest text-line">
+          SCREENSHOT
+        </div>
+      )
+    }
+
+    <span class="eyebrow mb-2 inline-block rounded-xs bg-green px-1.5 py-0.5 text-surface">
+      App
+    </span>
+
+    <h3 class="text-base font-extrabold tracking-tight text-ink">{title}</h3>
+    <p class="mt-1 text-sm leading-snug text-muted">{tagline}</p>
+  </a>
+
+  <div class="mt-auto pt-4">
+    <a
+      href={runHref}
+      aria-label={`Open ${title}`}
+      class="group/open inline-flex items-center gap-1.5 rounded-sm border border-line px-2.5 py-1.5 text-xs font-bold text-ink transition-colors hover:border-green hover:text-green"
+    >
+      OPEN
+      <span aria-hidden="true" class="transition-transform group-hover/open:translate-x-0.5">→</span>
+    </a>
+  </div>
+</article>
