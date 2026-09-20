@@ -18,9 +18,9 @@
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4",
-    "@vitejs/plugin-react": "^4",
+    "@vitejs/plugin-react": "^6",
     "tailwindcss": "^4",
-    "vite": "^6",
+    "vite": "^8",
     "vite-plugin-pwa": "^1"
   }
 }
