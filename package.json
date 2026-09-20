@@ -1,30 +1,28 @@
 {
-  "name": "kylejameswalker.github.io",
+  "name": "kylejameswalker-site",
   "private": true,
   "type": "module",
+  "workspaces": [
+    "apps/*"
+  ],
   "scripts": {
-    "build": "vite build",
-    "preview": "vite preview",
+    "dev": "astro dev",
+    "build": "astro build && node scripts/build-apps.mjs && node scripts/minify-zine.mjs",
+    "preview": "astro preview",
+    "astro": "astro",
+    "test": "npm run test --workspaces --if-present",
     "build:zine": "node scripts/minify-zine.mjs",
-    "test": "node --test applications/folding-boxes/geometry.test.mjs"
+    "check:portable": "node scripts/check-portable.mjs",
+    "check:links": "node scripts/check-links.mjs"
   },
   "dependencies": {
-    "clsx": "^2.1.1",
-    "d3-delaunay": "^6.0.4",
-    "lucide-react": "^0.460.0",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "tailwind-merge": "^3.5.0",
-    "three": "^0.170.0"
+    "@astrojs/sitemap": "^3.7.1",
+    "@tailwindcss/vite": "^4.1.18",
+    "astro": "^5.17.1",
+    "tailwindcss": "^4.1.18",
+    "yaml": "^2.8.1"
   },
   "devDependencies": {
-    "@vitejs/plugin-react": "^4.3.3",
-    "autoprefixer": "^10.4.24",
-    "esbuild": "^0.25.12",
-    "html5-qrcode": "^2.3.8",
-    "postcss": "^8.5.6",
-    "tailwindcss": "^3.4.19",
-    "vite": "^6.0.1",
-    "vite-plugin-pwa": "^1.2.0"
+    "esbuild": "^0.25.12"
   }
 }
