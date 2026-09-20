@@ -1,6 +1,6 @@
 // Minify the Dirty Little Zine Plus app into the built site.
 //
-// Runs against _site AFTER jekyll build and never touches the source tree. The
+// Runs against dist AFTER the Astro build and never touches the source tree. The
 // app deliberately has no build step of its own and must stay runnable by
 // pointing any static server at its directory, so the repo keeps readable,
 // commented source and only the deployed copy is bundled.
@@ -10,12 +10,12 @@ import { readdir, rm, stat } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 
-const APP = 'applications/dirty-little-zine-plus';
-const site = process.argv[2] || '_site';
-const out = path.join(site, APP);
+const APP = 'public/apps/dirty-little-zine-plus/run';
+const site = process.argv[2] || 'dist';
+const out = path.join(site, 'apps/dirty-little-zine-plus/run');
 
 if (!existsSync(out)) {
-  console.error(`minify-zine: ${out} not found. Run the Jekyll build first.`);
+  console.error(`minify-zine: ${out} not found. Run the site build first.`);
   process.exit(1);
 }
 
