@@ -1,40 +1,58 @@
-# KyleJamesWalker.github.io
+# kylejameswalker.com
 
-GitHub Pages personal site.
+Personal site: browser apps you can run here, and open source projects on
+GitHub. Built with Astro, React and Tailwind, deployed to GitHub Pages.
 
-## Local development
-
-### Option 1: Docker (recommended)
-
-Requires Docker. Uses Ruby 3.3 for compatibility with current dependencies.
+## Develop
 
 ```bash
-make build   # Build the Docker image
-make run     # Serve at http://localhost:4000
+npm install
+npm run dev              # the site, at http://localhost:4321
+npm run dev -w apps/folding-boxes   # one app, on its own
 ```
 
-### Option 2: Ruby + Bundler
+## Commands
 
-Requires Ruby 3.0+ (Ruby 2.6 is too old for current gem dependencies).
+| Command | What it does |
+|---|---|
+| `npm run build` | Site, then every app, then the zine minify, into `dist/` |
+| `npm run preview` | Serve the built site |
+| `npm test` | Run every app's tests |
+| `npm run check:portable` | Copy each app out of the repo and build it |
+| `npm run check:links` | Verify internal links in `dist/` resolve |
+| `npm run build:zine` | Just the zine minify step, against an existing `dist/` |
 
-```bash
-bundle install
-bundle exec jekyll serve
+## Layout
+
+```
+src/
+  content/apps/*.md    one file per app: card copy plus landing page prose
+  data/projects.yml    the repo list on /projects/
+  pages/               routes
+  components/          site UI
+  styles/global.css    Dracula theme tokens
+apps/<slug>/           standalone Vite projects, see apps/README.md
+public/                static files served as-is, including the zine app
 ```
 
-## Recent updates (2026)
+## Adding things
 
-This site was updated from a 10-year-old setup to current GitHub Pages standards:
+**An app.** Create `apps/<slug>/` following the contract in
+[`apps/README.md`](apps/README.md) and add `src/content/apps/<slug>.md`. The
+build picks the app up automatically and serves it at `/apps/<slug>/run/`.
 
-- **Jekyll**: 3.0.4 → 3.10.0 (matches GitHub Pages)
-- **URLs**: HTTP → HTTPS throughout
-- **Google Analytics**: Universal Analytics (UA-*, deprecated) → GA4. Add your `G-XXXXXXXXXX` measurement ID in `_config.yml` under `google_analytics_measurement_id` to enable tracking
-- **Syntax highlighter**: Pygments → Rouge
-- **jQuery**: 2.1 → 3.7 (for media player pages)
-- **Docker**: Alpine 3.2 → Ruby 3.3 Alpine base image
-- **Removed**: `.htaccess` include (file didn't exist), deprecated Universal Analytics
+**A project.** Add an entry to `src/data/projects.yml`. The `language` value
+must be a key in `languageColors` in `src/site.ts`, or the build fails.
 
-## Based on Feeling Responsive
+Headline, tagline, bio and links live in `src/site.ts`.
 
-Originally based: `0b3f6650f72ee2cf4fe6180ac08054fe7fe1823a`  
-Updated based: `9f3f272bf577030af62e878e0b2af7b3b54b7996`
+## Apps are not locked to this site
+
+Every directory under `apps/` is a complete Vite project. Copy one anywhere,
+run `npm install && npm run dev`, and it works with nothing of this site
+attached. CI enforces this on every push.
+
+The site does not compile app code. Each app is built by its own toolchain and
+the output is copied into `dist/`, so what is deployed and what you get from
+copying the folder out are the same artifact. See
+[`apps/README.md`](apps/README.md).
