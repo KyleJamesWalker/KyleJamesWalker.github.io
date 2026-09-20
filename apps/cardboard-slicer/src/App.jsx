@@ -5,6 +5,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { Upload, Download, Layers, Ruler, Square, Play, Loader } from 'lucide-react';
 
+import './app.css';
+
 // --- STL Parsing Utilities ---
 function parseSTLAscii(text) {
   const triangles = [];
@@ -596,7 +598,7 @@ export default function App() {
       <header className="flex items-center justify-between px-6 py-4 bg-neutral-950 border-b border-neutral-800">
         <div className="flex items-center space-x-3">
           <Layers className="w-6 h-6 text-orange-500" />
-          <h1 className="text-xl font-bold tracking-wide">Cardboard Slicer Pro</h1>
+          <h1 className="text-xl font-bold tracking-wide">Cardboard Slicer</h1>
         </div>
         <div className="text-sm text-neutral-400 flex items-center">
           <span className="w-2 h-2 rounded-full bg-green-500 mr-2"></span>
@@ -628,9 +630,9 @@ export default function App() {
             <div className="mb-8 p-4 bg-neutral-950 rounded-lg border border-neutral-800">
               <h3 className="text-xs uppercase tracking-wider text-neutral-500 mb-3 font-semibold">Model Dimensions (Scaled)</h3>
               <div className="grid grid-cols-3 gap-2 text-center">
-                <div className="bg-neutral-900 p-2 rounded"><div className="text-xs text-neutral-400">Width (X)</div><div className="font-mono text-sm">{modelData.width.toFixed(1)}</div></div>
-                <div className="bg-neutral-900 p-2 rounded"><div className="text-xs text-neutral-400">Length (Y)</div><div className="font-mono text-sm">{modelData.length.toFixed(1)}</div></div>
-                <div className="bg-neutral-900 p-2 rounded border border-orange-500/30"><div className="text-xs text-orange-400">Height (Z)</div><div className="font-mono text-sm">{modelData.height.toFixed(1)}</div></div>
+                <div className="bg-neutral-900 p-2 rounded-sm"><div className="text-xs text-neutral-400">Width (X)</div><div className="font-mono text-sm">{modelData.width.toFixed(1)}</div></div>
+                <div className="bg-neutral-900 p-2 rounded-sm"><div className="text-xs text-neutral-400">Length (Y)</div><div className="font-mono text-sm">{modelData.length.toFixed(1)}</div></div>
+                <div className="bg-neutral-900 p-2 rounded-sm border border-orange-500/30"><div className="text-xs text-orange-400">Height (Z)</div><div className="font-mono text-sm">{modelData.height.toFixed(1)}</div></div>
               </div>
             </div>
           )}
@@ -645,7 +647,7 @@ export default function App() {
                 type="number"
                 value={targetHeight}
                 onChange={(e) => setTargetHeight(Number(e.target.value))}
-                className="w-full bg-neutral-950 border border-neutral-800 rounded-md py-2 px-3 focus:outline-none focus:border-orange-500 transition-colors"
+                className="w-full bg-neutral-950 border border-neutral-800 rounded-md py-2 px-3 focus:outline-hidden focus:border-orange-500 transition-colors"
               />
             </div>
 
@@ -655,11 +657,11 @@ export default function App() {
               </label>
               <div className="flex bg-neutral-950 rounded-md p-1 border border-neutral-800">
                 <button
-                  className={`flex-1 text-sm py-1.5 rounded-sm transition-colors ${sliceMode === 'thickness' ? 'bg-neutral-800 shadow text-white' : 'text-neutral-500 hover:text-white'}`}
+                  className={`flex-1 text-sm py-1.5 rounded-xs transition-colors ${sliceMode === 'thickness' ? 'bg-neutral-800 shadow-sm text-white' : 'text-neutral-500 hover:text-white'}`}
                   onClick={() => setSliceMode('thickness')}
                 >By Thickness</button>
                 <button
-                  className={`flex-1 text-sm py-1.5 rounded-sm transition-colors ${sliceMode === 'count' ? 'bg-neutral-800 shadow text-white' : 'text-neutral-500 hover:text-white'}`}
+                  className={`flex-1 text-sm py-1.5 rounded-xs transition-colors ${sliceMode === 'count' ? 'bg-neutral-800 shadow-sm text-white' : 'text-neutral-500 hover:text-white'}`}
                   onClick={() => setSliceMode('count')}
                 >By Count</button>
               </div>
@@ -672,7 +674,7 @@ export default function App() {
                   type="number" step="0.1"
                   value={layerThickness}
                   onChange={(e) => setLayerThickness(Number(e.target.value))}
-                  className="w-full bg-neutral-950 border border-neutral-800 rounded-md py-2 px-3 focus:outline-none focus:border-orange-500"
+                  className="w-full bg-neutral-950 border border-neutral-800 rounded-md py-2 px-3 focus:outline-hidden focus:border-orange-500"
                 />
                 <p className="text-xs text-neutral-500 mt-2">Will produce ~{Math.floor(targetHeight / layerThickness)} layers.</p>
               </div>
@@ -683,7 +685,7 @@ export default function App() {
                   type="number"
                   value={layerCount}
                   onChange={(e) => setLayerCount(Number(e.target.value))}
-                  className="w-full bg-neutral-950 border border-neutral-800 rounded-md py-2 px-3 focus:outline-none focus:border-orange-500"
+                  className="w-full bg-neutral-950 border border-neutral-800 rounded-md py-2 px-3 focus:outline-hidden focus:border-orange-500"
                 />
                 <p className="text-xs text-neutral-500 mt-2">Each layer will be {(targetHeight / layerCount).toFixed(2)}mm thick.</p>
               </div>
@@ -724,32 +726,32 @@ export default function App() {
             className="flex-1 border-b border-neutral-800 flex relative cursor-move bg-gradient-to-b from-neutral-800 to-neutral-950"
           >
             {/* Sync Camera Overlay instructions */}
-            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 pointer-events-none bg-black/40 px-3 py-1.5 rounded-full text-xs text-neutral-300 border border-white/10 backdrop-blur-sm shadow-xl whitespace-nowrap">
+            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 pointer-events-none bg-black/40 px-3 py-1.5 rounded-full text-xs text-neutral-300 border border-white/10 backdrop-blur-xs shadow-xl whitespace-nowrap">
               Left-click: Rotate • Right-click (or Shift+click): Pan • Scroll: Zoom
             </div>
 
             {/* Left: Original */}
             <div className="flex-1 relative border-r border-black/50">
-              <div className="absolute bottom-4 left-4 z-10 bg-black/60 px-2 py-1 rounded text-xs text-neutral-400">Original Model</div>
+              <div className="absolute bottom-4 left-4 z-10 bg-black/60 px-2 py-1 rounded-sm text-xs text-neutral-400">Original Model</div>
               <canvas ref={leftCanvasRef} className="w-full h-full block" />
             </div>
 
             {/* Right: Sliced */}
             <div className="flex-1 relative border-l border-white/5">
-              <div className="absolute bottom-4 right-4 z-10 bg-black/60 px-2 py-1 rounded text-xs text-orange-400 font-medium">Cardboard Preview</div>
+              <div className="absolute bottom-4 right-4 z-10 bg-black/60 px-2 py-1 rounded-sm text-xs text-orange-400 font-medium">Cardboard Preview</div>
               <canvas ref={rightCanvasRef} className="w-full h-full block" />
             </div>
           </div>
 
           {/* 2D Blueprint View */}
           <div className="h-[40%] bg-neutral-200 relative overflow-hidden flex flex-col border-t-4 border-neutral-950">
-             <div className="absolute top-0 left-0 right-0 bg-white/90 backdrop-blur border-b border-neutral-300 px-4 py-2 flex justify-between items-center z-10 shadow-sm">
+             <div className="absolute top-0 left-0 right-0 bg-white/90 backdrop-blur-sm border-b border-neutral-300 px-4 py-2 flex justify-between items-center z-10 shadow-xs">
               <span className="text-black font-semibold text-sm flex items-center">
                 <Square className="w-4 h-4 mr-2 text-neutral-600"/> 2D Laser Cutting Layout
               </span>
               <span className="text-xs text-neutral-500">Preview only. Click Download SVG for true-to-scale vector file.</span>
             </div>
-            <div className="flex-1 overflow-auto p-8 pt-16 flex items-start justify-center cursor-grab active:cursor-grabbing inner-shadow">
+            <div className="flex-1 overflow-auto p-8 pt-16 flex items-start justify-center cursor-grab active:cursor-grabbing">
               {/* Using a wrapper to center the canvas naturally if it's smaller than the viewport, and scroll if larger */}
               <div className="bg-white shadow-2xl border border-neutral-300 transition-transform duration-300 ease-in-out transform origin-top">
                  <canvas ref={blueprintCanvasRef} className="block pointer-events-none" />

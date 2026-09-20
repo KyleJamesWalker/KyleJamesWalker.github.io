@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { createRoot } from 'react-dom/client';
 import { 
   Camera as CameraIcon, 
   History, 
@@ -25,6 +24,23 @@ function cn(...inputs) {
   return twMerge(clsx(inputs));
 }
 
+const ZOOM_LEVELS = [1, 2, 3, 5];
+const ZOOM_STORAGE_KEY = 'lead-scanner-zoom';
+
+// html5-qrcode decodes raw camera frames, so zoom has to happen on the
+// MediaStreamTrack itself — a CSS transform would enlarge the preview only.
+const getVideoTrack = () => {
+  const video = document.getElementById('reader')?.querySelector('video');
+  const stream = video?.srcObject;
+  return stream?.getVideoTracks?.()?.[0] ?? null;
+};
+
+const clampZoom = (level, range) => {
+  const min = typeof range.min === 'number' ? range.min : 1;
+  const max = typeof range.max === 'number' ? range.max : level;
+  return Math.min(Math.max(level, min), max);
+};
+
 const App = () => {
   const [scans, setScans] = useState(() => {
     const saved = localStorage.getItem('lead-scans');
@@ -35,6 +51,11 @@ const App = () => {
   const [view, setView] = useState('home'); // 'home', 'history'
   const scannerRef = useRef(null);
   const [cameraPermission, setCameraPermission] = useState('unknown');
+  const [zoomRange, setZoomRange] = useState(null);
+  const [zoomLevel, setZoomLevel] = useState(() => {
+    const saved = Number(localStorage.getItem(ZOOM_STORAGE_KEY));
+    return ZOOM_LEVELS.includes(saved) ? saved : 1;
+  });
 
   useEffect(() => {
     localStorage.setItem('lead-scans', JSON.stringify(scans));
@@ -55,6 +76,28 @@ const App = () => {
     };
   };
 
+  const applyZoom = async (level) => {
+    const track = getVideoTrack();
+    const range = track?.getCapabilities?.().zoom;
+    if (!range) return;
+
+    try {
+      await track.applyConstraints({ advanced: [{ zoom: clampZoom(level, range) }] });
+      setZoomLevel(level);
+      localStorage.setItem(ZOOM_STORAGE_KEY, String(level));
+    } catch (err) {
+      console.error("Zoom apply error", err);
+      const active = track.getSettings?.().zoom;
+      if (typeof active === 'number') setZoomLevel(active);
+    }
+  };
+
+  const initZoom = () => {
+    const range = getVideoTrack()?.getCapabilities?.().zoom;
+    setZoomRange(range ?? null);
+    if (range) applyZoom(zoomLevel);
+  };
+
   const onScanSuccess = (decodedText) => {
     // Simple deduplication logic: don't scan the same thing twice within 3 seconds
     if (lastScan && lastScan.rawData === decodedText && Date.now() - lastScan.id < 3000) {
@@ -73,7 +116,8 @@ const App = () => {
     setScans(prev => [newScan, ...prev]);
     setLastScan(newScan);
     setIsScanning(false);
-    
+    setZoomRange(null);
+
     if (scannerRef.current) {
       scannerRef.current.stop().catch(err => console.error(err));
     }
@@ -97,15 +141,17 @@ const App = () => {
         (errorMessage) => {
           // ignore scan errors
         }
-      ).catch((err) => {
+      ).then(initZoom).catch((err) => {
         console.error("Scanner start error", err);
         setIsScanning(false);
+        setZoomRange(null);
         alert("Could not access camera. Please check permissions.");
       });
     }, 100);
   };
 
   const stopScanner = () => {
+    setZoomRange(null);
     if (scannerRef.current) {
       scannerRef.current.stop().then(() => {
         setIsScanning(false);
@@ -174,7 +220,7 @@ const App = () => {
       <header className="bg-indigo-700 h-14 flex items-center justify-between px-6 shadow-md shrink-0">
         <div className="flex items-center gap-2">
           <QrCode className="text-white" size={24} />
-          <h1 className="text-white text-lg font-bold">Badge Scanner</h1>
+          <h1 className="text-white text-lg font-bold">Lead Scanner</h1>
         </div>
         <span className="text-indigo-200 text-xs font-mono">v1.1.0 (PWA)</span>
       </header>
@@ -239,9 +285,29 @@ const App = () => {
               </div>
             </div>
 
+            {isScanning && zoomRange && (
+              <div className="mt-6 flex gap-2" role="group" aria-label="Camera zoom">
+                {ZOOM_LEVELS.map((level) => (
+                  <button
+                    key={level}
+                    onClick={() => applyZoom(level)}
+                    aria-pressed={zoomLevel === level}
+                    className={cn(
+                      "min-w-[60px] min-h-[44px] rounded-xl text-sm font-black transition-all shadow-xs",
+                      zoomLevel === level
+                        ? "bg-indigo-600 text-white"
+                        : "bg-white border border-slate-200 text-slate-400 hover:text-slate-600"
+                    )}
+                  >
+                    {level}x
+                  </button>
+                ))}
+              </div>
+            )}
+
             {isScanning && (
               <div className="mt-8 w-full">
-                <button 
+                <button
                   onClick={stopScanner}
                   className="w-full py-3 text-slate-400 font-bold text-sm hover:text-slate-600 transition-colors"
                 >
@@ -251,7 +317,7 @@ const App = () => {
             )}
 
             {!isScanning && lastScan && (
-              <div className="w-full mt-8 bg-white border-2 border-emerald-100 rounded-[1.25rem] p-5 flex gap-4 shadow-sm animate-in fade-in slide-in-from-bottom-4">
+              <div className="w-full mt-8 bg-white border-2 border-emerald-100 rounded-[1.25rem] p-5 flex gap-4 shadow-xs animate-in fade-in slide-in-from-bottom-4">
                 <div className="p-3 bg-emerald-50 rounded-full h-fit">
                   <CheckCircle2 size={24} className="text-emerald-500" />
                 </div>
@@ -267,13 +333,13 @@ const App = () => {
           </div>
         ) : (
           <div className="flex flex-col h-full">
-            <div className="flex items-center justify-between p-5 bg-slate-50/90 sticky top-0 z-10 backdrop-blur-sm">
+            <div className="flex items-center justify-between p-5 bg-slate-50/90 sticky top-0 z-10 backdrop-blur-xs">
               <h2 className="text-xl font-black text-slate-800">Lead Database</h2>
               <div className="flex items-center gap-3">
                 <button 
                   onClick={exportToCSV}
                   disabled={scans.length === 0}
-                  className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-30 text-white flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all shadow-sm"
+                  className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-30 text-white flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all shadow-xs"
                 >
                   <Download size={16} />
                   <span>Export CSV</span>
@@ -304,7 +370,7 @@ const App = () => {
                 </div>
               ) : (
                 scans.map((scan) => (
-                  <div key={scan.id} className="bg-white border border-slate-200 rounded-[1.25rem] p-5 shadow-sm">
+                  <div key={scan.id} className="bg-white border border-slate-200 rounded-[1.25rem] p-5 shadow-xs">
                     <div className="flex justify-between items-start mb-3">
                       <div>
                         <span className="text-[10px] font-bold text-indigo-500 tracking-wider uppercase">{scan.timestamp}</span>
@@ -334,8 +400,8 @@ const App = () => {
                     </div>
 
                     <div className="flex flex-wrap gap-2 mt-4">
-                      <span className="bg-slate-100 px-2 py-1 rounded text-[10px] font-black text-slate-500 uppercase">CID: {scan.parsed.conference_id}</span>
-                      <span className="bg-slate-100 px-2 py-1 rounded text-[10px] font-black text-slate-500 uppercase">ZIP: {scan.parsed.zip_code}</span>
+                      <span className="bg-slate-100 px-2 py-1 rounded-sm text-[10px] font-black text-slate-500 uppercase">CID: {scan.parsed.conference_id}</span>
+                      <span className="bg-slate-100 px-2 py-1 rounded-sm text-[10px] font-black text-slate-500 uppercase">ZIP: {scan.parsed.zip_code}</span>
                     </div>
                   </div>
                 ))
@@ -354,6 +420,4 @@ const App = () => {
   );
 };
 
-const container = document.getElementById('lead-scanner-root');
-const root = createRoot(container);
-root.render(<App />);
+export default App;

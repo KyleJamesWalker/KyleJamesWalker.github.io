@@ -1,6 +1,6 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@source "./**/*.{js,jsx}";
 
 @layer base {
   body {
@@ -13,7 +13,7 @@ input[type="range"] {
 }
 
 input[type="color"] {
-  @apply w-8 h-8 rounded cursor-pointer border border-slate-300;
+  @apply w-8 h-8 rounded-sm cursor-pointer border border-slate-300;
   padding: 1px;
 }
 

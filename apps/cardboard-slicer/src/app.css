@@ -1,0 +1,8 @@
+@import "tailwindcss";
+@source "./**/*.{js,jsx}";
+
+@layer base {
+  body {
+    @apply bg-neutral-900 text-neutral-100;
+  }
+}

@@ -1,4 +1,6 @@
 import { useMemo, useState } from 'react';
+
+import './app.css';
 import { AlertTriangle, Box, ChevronDown, ChevronRight, Download, Ruler } from 'lucide-react';
 
 import { VARIANTS, buildBox, fromMM, toMM, toSVG } from './geometry.js';
@@ -50,7 +52,7 @@ function NumberField({ label, value, onChange, unit, step, min = 0, compact = fa
         min={min}
         step={step}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="mt-1 w-full rounded-md border border-neutral-800 bg-neutral-950 px-3 py-2 font-mono text-sm focus:border-amber-500 focus:outline-none"
+        className="mt-1 w-full rounded-md border border-neutral-800 bg-neutral-950 px-3 py-2 font-mono text-sm focus:border-amber-500 focus:outline-hidden"
       />
     </label>
   );
@@ -64,8 +66,8 @@ function Segmented({ options, value, onChange, className = '' }) {
           key={option.id}
           type="button"
           onClick={() => onChange(option.id)}
-          className={`flex-1 rounded-sm py-1.5 text-sm transition-colors ${
-            value === option.id ? 'bg-neutral-800 text-white shadow' : 'text-neutral-500 hover:text-white'
+          className={`flex-1 rounded-xs py-1.5 text-sm transition-colors ${
+            value === option.id ? 'bg-neutral-800 text-white shadow-sm' : 'text-neutral-500 hover:text-white'
           }`}
         >
           {option.name}

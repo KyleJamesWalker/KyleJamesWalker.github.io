@@ -87,15 +87,30 @@ catching on them.
 
 ## Development
 
-The blank geometry lives in `geometry.js` with no React or DOM dependency, which
-keeps it testable on its own:
+Standalone Vite project. It does not depend on anything outside this directory,
+so it runs the same copied out of the repo as it does inside it:
+
+```sh
+npm install
+npm run dev
+```
+
+`npm run build` emits a self-contained `dist/` with relative asset paths, so it
+serves from any subdirectory.
+
+| Path | Role |
+|---|---|
+| `index.html` | standalone entry, loads `src/main.jsx` |
+| `src/main.jsx` | mounts `App` into `#root` |
+| `src/App.jsx` | the component, imports `./app.css` |
+| `src/app.css` | Tailwind v4; sources and theme declared inline |
+| `src/geometry.js` | blank geometry, no React or DOM |
+
+The site imports `src/App.jsx` directly and ignores `index.html` and
+`main.jsx`.
+
+The geometry has no React or DOM dependency, which keeps it testable on its own:
 
 ```sh
 npm test
-```
-
-The app is built with the rest of the site's Vite entry points:
-
-```sh
-npm run build
 ```
