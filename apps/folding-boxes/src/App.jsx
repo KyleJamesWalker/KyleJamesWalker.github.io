@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react';
 import './app.css';
 import { AlertTriangle, Box, ChevronDown, ChevronRight, Download, Ruler } from 'lucide-react';
 
-import { VARIANTS, buildBox, fromMM, toMM, toSVG } from './geometry.js';
+import { VARIANTS, buildBox, fromMM, roundForUnit, stepForUnit, toMM, toSVG } from './geometry.js';
 
 const DEFAULTS_MM = {
   length: 200,
@@ -30,8 +30,6 @@ const ASSEMBLY = {
   ],
   sliplid: [...ROLL_END, 'Build the lid the same way. It is cut to the base outside plus the slip clearance, so it slides over the finished base.'],
 };
-
-const round = (n, unit) => Number(n.toFixed(unit === 'mm' ? 2 : 3));
 
 function NumberField({ label, value, onChange, unit, step, min = 0, compact = false }) {
   return (
@@ -131,14 +129,14 @@ export default function App() {
   const [labelPieces, setLabelPieces] = useState(false);
   const [values, setValues] = useState(DEFAULTS_MM);
 
-  const step = unit === 'mm' ? 0.5 : 0.01;
+  const step = stepForUnit(unit);
   const set = (key) => (value) => setValues((prev) => ({ ...prev, [key]: value }));
 
   const switchUnit = (next) => {
     if (next === unit) return;
     setValues((prev) =>
       Object.fromEntries(
-        Object.entries(prev).map(([key, value]) => [key, round(fromMM(toMM(value, unit), next), next)]),
+        Object.entries(prev).map(([key, value]) => [key, roundForUnit(fromMM(toMM(value, unit), next), next)]),
       ),
     );
     setUnit(next);
@@ -149,7 +147,7 @@ export default function App() {
     return buildBox({ ...mm, variant, dimensionMode });
   }, [values, unit, variant, dimensionMode]);
 
-  const show = (mmValue) => round(fromMM(mmValue, unit), unit);
+  const show = (mmValue) => roundForUnit(fromMM(mmValue, unit), unit);
   const ok = box.errors.length === 0;
 
   const download = () => {
