@@ -16,6 +16,12 @@ export const MM_PER_INCH = 25.4;
 export const toMM = (value, unit) => (unit === 'in' ? value * MM_PER_INCH : value);
 export const fromMM = (value, unit) => (unit === 'in' ? value / MM_PER_INCH : value);
 
+const UNIT_DECIMALS = { mm: 2, in: 3 };
+
+/** A number input rejects any value off its step grid, so both must agree. */
+export const roundForUnit = (value, unit) => Number(value.toFixed(UNIT_DECIMALS[unit]));
+export const stepForUnit = (unit) => 10 ** -UNIT_DECIMALS[unit];
+
 export const VARIANTS = [
   { id: 'tray', name: 'Open tray', blurb: 'Roll-end tray, no lid. The ends lock into the base.' },
   { id: 'mailer', name: 'Locking flap lid', blurb: 'The same tray plus a hinged lid whose eared flap tucks inside the front wall.' },

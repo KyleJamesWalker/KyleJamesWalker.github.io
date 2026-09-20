@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { buildBox, innerFromOuter, outerFromInner, toSVG, toMM, fromMM } from './geometry.js';
+import { buildBox, innerFromOuter, outerFromInner, roundForUnit, stepForUnit, toSVG, toMM, fromMM } from './geometry.js';
 
 const base = { length: 500, width: 300, height: 80, thickness: 3 };
 const close = (actual, expected, message) =>
@@ -240,4 +240,40 @@ test('SVG carries millimetre page size and separate cut and fold layers', () => 
   assert.ok(!svg.includes('NaN'), 'no NaN coordinates');
   assert.ok(!svg.includes('id="engrave"'), 'labels are opt-in');
   assert.match(toSVG(box, { showLabels: true }), /id="engrave"/);
+});
+
+/** Mirrors how a number input validates: value - min must be a whole multiple of step. */
+const onStepGrid = (value, step) => {
+  const multiples = value / step;
+  return Math.abs(multiples - Math.round(multiples)) < 1e-9;
+};
+
+test('converted values land on the step grid the input validates against', () => {
+  const units = ['mm', 'in'];
+  const samples = [200, 140, 60, 3, 0.4, 7.9, 2.5, 0.118, 63.5, 1];
+
+  for (const from of units) {
+    for (const to of units) {
+      for (const value of samples) {
+        const converted = roundForUnit(fromMM(toMM(value, from), to), to);
+        assert.ok(
+          onStepGrid(converted, stepForUnit(to)),
+          `${value}${from} -> ${converted}${to} is off the ${stepForUnit(to)} grid`,
+        );
+      }
+    }
+  }
+});
+
+test('a unit round trip stays within the rounding precision', () => {
+  // 3dp of an inch is the coarsest step, so it bounds the whole round trip.
+  const tolerance = toMM(stepForUnit('in'), 'in');
+
+  for (const value of [200, 140, 60, 3, 0.4, 7.9]) {
+    const back = toMM(roundForUnit(fromMM(value, 'in'), 'in'), 'in');
+    assert.ok(
+      Math.abs(back - value) <= tolerance,
+      `${value}mm -> in -> ${back}mm drifted more than ${tolerance}mm`,
+    );
+  }
 });
