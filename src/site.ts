@@ -5,10 +5,10 @@ export const site = {
   headline: ["Open source", "apps, tools", "and libraries."],
   headlineAccentIndex: 0,
   tagline:
-    "Browser tools for laser cutters and paper. Rust binaries. Python libraries.",
+    "Browser tools for hobbies and conferences. Rust binaries. Python libraries.",
 
   description:
-    "Open source apps, tools and libraries by Kyle James Walker. Browser tools for laser cutters and paper, Rust binaries, and Python libraries.",
+    "Open source apps, tools and libraries by Kyle James Walker. Browser tools for hobbies and conferences, Rust binaries, and Python libraries.",
 
   hero: {
     alt: "Sugar cubes stacked into a cube, lit green, blue and orange against black.",
