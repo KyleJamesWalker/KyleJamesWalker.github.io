@@ -1,8 +1,9 @@
 - id: palmcast
   name: Palmcast
   blurb: >-
-    Present a talk when nobody brought a laptop. Runs from a single Rust binary
-    and drives the slides from your phone.
+    Anyone in the room can submit a talk, and the host hands its speaker the
+    controls. The audience can ask questions and answer polls. palmcast-looks
+    adds themes and transitions.
   language: Rust
   url: https://github.com/KyleJamesWalker/Palmcast
   extraLabel: Live site
@@ -14,8 +15,8 @@
 - id: keystones
   name: Keystones
   blurb: >-
-    Require review by a named expert before load-bearing code changes, by
-    pinning the gate to an AST node rather than a line number.
+    Require subject-matter expert review of load-bearing code, by pinning a
+    review gate to an AST node instead of a file path.
   language: Python
   url: https://github.com/KyleJamesWalker/keystones
   featured: true
@@ -25,7 +26,8 @@
 - id: vscode-cc-agent-manager
   name: VSCode CC Agent Manager
   blurb: >-
-    Watch your Claude Code agents without leaving VSCode.
+    A live dashboard for your Claude Code sessions: monitor agents, send
+    messages and export conversations without leaving VSCode.
   language: TypeScript
   url: https://github.com/KyleJamesWalker/vscode-cc-agent-manager
   extraLabel: Marketplace
@@ -37,8 +39,9 @@
 - id: yamlsettings
   name: yamlsettings
   blurb: >-
-    Layered YAML configuration for Python, with environment overrides and
-    pluggable loaders for S3 and HTTP.
+    Layered YAML settings for Python, with environment variable overrides.
+    Extensions add loaders: yamlsettings-s3 for S3, yamlsettings-requests for
+    HTTP.
   language: Python
   url: https://github.com/KyleJamesWalker/yamlsettings
   featured: true
@@ -48,7 +51,9 @@
 - id: amberdav
   name: AmberDAV
   blurb: >-
-    A WebDAV file server and command line utility built.
+    A single-binary file server for Anbernic handhelds, the Steam Deck, Windows
+    and macOS: a browser file manager, a WebDAV network drive, and a QR code to
+    connect.
   language: Rust
   url: https://github.com/KyleJamesWalker/AmberDAV
   order: 5
@@ -57,8 +62,9 @@
 - id: simple-confidence-monitor
   name: SimpleConfidenceMonitor
   blurb: >-
-    A speaker timer and confidence monitor served from one Rust binary. Point a
-    second screen at it and start talking.
+    A confidence monitor for conference speakers: a stage display with the
+    timer, notes and messages, driven by an operator from a phone, tablet or
+    laptop.
   language: Rust
   url: https://github.com/KyleJamesWalker/SimpleConfidenceMonitor
   order: 6
@@ -67,7 +73,8 @@
 - id: cc-cmux-plugin
   name: cc-cmux-plugin
   blurb: >-
-    Claude Code cmux plugin.
+    Integrates cmux with Claude Code: agent status in the sidebar, native
+    notifications, and the cmux command reference in every session.
   language: Shell
   url: https://github.com/KyleJamesWalker/cc-cmux-plugin
   order: 7
@@ -75,7 +82,9 @@
 
 - id: restraint-py
   name: restraint-py
-  blurb: A small rate limiting library for Python.
+  blurb: >-
+    Composable rate limiting for Python, as a decorator or context manager,
+    sync or async.
   language: Python
   url: https://github.com/KyleJamesWalker/restraint-py
   order: 8
@@ -84,8 +93,8 @@
 - id: pre-commit-hooks
   name: pre-commit-hooks
   blurb: >-
-    Custom hooks for pre-commit, including the prose linter that enforces the
-    writing rules used across repositories.
+    Custom hooks for pre-commit, including a prose linter for the
+    machine-checkable rules of ASD-STE100 Simplified Technical English.
   language: Python
   url: https://github.com/KyleJamesWalker/pre-commit-hooks
   order: 9
