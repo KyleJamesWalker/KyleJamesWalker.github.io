@@ -17,8 +17,8 @@ export const site = {
   about: {
     heading: "About",
     body: [
-      "Data engineer by day. The rest of the time I make things that cut, fold, print or present, usually because I wanted one and it did not exist.",
-      "Everything here is open source and free to take. The browser apps run entirely on your machine, with no account and no upload.",
+      "Distinguished Data Engineer at Zefr, and partner and organizer of Data Con LA. This page contains a collection of various tools and libraries that are MIT licensed.",
+      "The browser apps run entirely on your machine, with no account and no upload.",
     ],
   },
 
