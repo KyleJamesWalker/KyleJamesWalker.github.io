@@ -5,20 +5,24 @@ export const site = {
   headline: ["Open source", "apps, tools", "and libraries."],
   headlineAccentIndex: 0,
   tagline:
-    "Browser tools for laser cutters and paper. Rust binaries. Python libraries.",
+    "Browser tools for hobbies and conferences. Rust binaries. Python libraries.",
 
   description:
-    "Open source apps, tools and libraries by Kyle James Walker. Browser tools for laser cutters and paper, Rust binaries, and Python libraries.",
+    "Open source apps, tools and libraries by Kyle James Walker. Browser tools for hobbies and conferences, Rust binaries, and Python libraries.",
 
   hero: {
     alt: "Sugar cubes stacked into a cube, lit green, blue and orange against black.",
   },
 
+  portrait: {
+    alt: "Kyle lying in the grass beside a lake, snow-covered mountains behind.",
+  },
+
   about: {
     heading: "About",
     body: [
-      "Data engineer by day. The rest of the time I make things that cut, fold, print or present, usually because I wanted one and it did not exist.",
-      "Everything here is open source and free to take. The browser apps run entirely on your machine, with no account and no upload.",
+      "Distinguished Data Engineer at Zefr, and partner and organizer of Data Con LA. This page contains a collection of various tools and libraries that are MIT licensed.",
+      "The browser apps run entirely on your machine, with no account and no upload.",
     ],
   },
 
