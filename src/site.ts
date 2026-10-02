@@ -14,6 +14,10 @@ export const site = {
     alt: "Sugar cubes stacked into a cube, lit green, blue and orange against black.",
   },
 
+  portrait: {
+    alt: "Kyle lying in the grass beside a lake, snow-covered mountains behind.",
+  },
+
   about: {
     heading: "About",
     body: [
