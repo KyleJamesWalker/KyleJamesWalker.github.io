@@ -16,7 +16,8 @@
   name: Keystones
   blurb: >-
     Require subject-matter expert review of load-bearing code, by pinning a
-    review gate to an AST node instead of a file path.
+    review gate to an AST node instead of a file path. Plugins add dbt
+    models and LookML: keystones-dbt and keystones-lookml.
   language: Python
   url: https://github.com/KyleJamesWalker/keystones
   featured: true
@@ -48,6 +49,40 @@
   order: 4
   tags: [configuration, library]
 
+- id: last-harvest
+  name: Last Harvest
+  blurb: >-
+    A zombie survivors-like for the ANBERNIC RG DS Plus dual-screen handheld:
+    survive the night on a generated farm, then run for the farmhouse at dawn.
+    Mod it with cards made in a browser editor.
+  language: Rust
+  url: https://github.com/KyleJamesWalker/last-harvest
+  extraLabel: Play in browser
+  extraUrl: https://www.kylejameswalker.com/last-harvest/
+  order: 5
+  tags: [game, handheld, webassembly]
+
+- id: twinbit-ds
+  name: twinbit-ds
+  blurb: >-
+    A GitHub template for Rust games on the ANBERNIC RG DS Plus, with a working
+    demo of every hardware feature: both touch screens, the microphone, rumble,
+    LEDs and 3D.
+  language: Rust
+  url: https://github.com/KyleJamesWalker/twinbit-ds
+  order: 6
+  tags: [handheld, template]
+
+- id: glowmote
+  name: glowmote
+  blurb: >-
+    One remote for Bluetooth LED strips, in place of each vendor's app: a CLI,
+    a Tauri desktop app, and an HTTP proxy to script the lights with curl.
+  language: Rust
+  url: https://github.com/KyleJamesWalker/glowmote
+  order: 7
+  tags: [bluetooth, home]
+
 - id: supermariowar-rust
   name: Super Mario War (Rust)
   blurb: >-
@@ -58,7 +93,7 @@
   url: https://github.com/KyleJamesWalker/supermariowar-rust
   extraLabel: Play in browser
   extraUrl: https://www.kylejameswalker.com/supermariowar-rust/
-  order: 5
+  order: 8
   tags: [game, webassembly, port]
 
 - id: amberdav
@@ -69,7 +104,7 @@
     connect.
   language: Rust
   url: https://github.com/KyleJamesWalker/AmberDAV
-  order: 6
+  order: 9
   tags: [webdav, handheld]
 
 - id: simple-confidence-monitor
@@ -80,7 +115,7 @@
     laptop.
   language: Rust
   url: https://github.com/KyleJamesWalker/SimpleConfidenceMonitor
-  order: 7
+  order: 10
   tags: [presenting, self-hosted]
 
 - id: cc-cmux-plugin
@@ -90,7 +125,7 @@
     notifications, and the cmux command reference in every session.
   language: Shell
   url: https://github.com/KyleJamesWalker/cc-cmux-plugin
-  order: 8
+  order: 11
   tags: [claude-code, terminal]
 
 - id: restraint-py
@@ -100,7 +135,7 @@
     sync or async.
   language: Python
   url: https://github.com/KyleJamesWalker/restraint-py
-  order: 9
+  order: 12
   tags: [rate-limiting, library]
 
 - id: pre-commit-hooks
@@ -110,7 +145,7 @@
     machine-checkable rules of ASD-STE100 Simplified Technical English.
   language: Python
   url: https://github.com/KyleJamesWalker/pre-commit-hooks
-  order: 10
+  order: 13
   tags: [pre-commit, linting]
 
 - id: pr-changes-matrix-builder
@@ -120,7 +155,7 @@
     actually touched.
   language: Python
   url: https://github.com/KyleJamesWalker/pr-changes-matrix-builder
-  order: 11
+  order: 14
   tags: [github-actions, ci]
 
 - id: yaml-params
@@ -130,7 +165,7 @@
     the workflow environment.
   language: Python
   url: https://github.com/KyleJamesWalker/yaml-params
-  order: 12
+  order: 15
   tags: [github-actions, ci]
 
 - id: renogy-rover
@@ -139,5 +174,5 @@
     A MODBUS driver for the Renogy Rover 20A and 40A solar charge controllers.
   language: Python
   url: https://github.com/KyleJamesWalker/renogy_rover
-  order: 13
+  order: 16
   tags: [hardware, solar]
